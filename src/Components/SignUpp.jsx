@@ -26,7 +26,7 @@ import {
   IconEnvelopeLarge,
   IconClose
 } from "../icons";
-import './SignUpp.css'; // Import the CSS file
+import './Register.css'; // Import the CSS file
 
 const OTP_LENGTH = 6;
 const RESEND_SECONDS = 60;
@@ -631,6 +631,5 @@ const handleLogin = async (e) => {
         </ModalBody>
       </Modal>
     </div>
-    // fasfsd
   );
 }
