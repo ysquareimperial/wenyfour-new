@@ -1,35 +1,22 @@
-import { useEffect, useState } from "react";
-import "./App.css";
-import SignUpp from "./Components/SignUpp";
-import { useDispatch } from "react-redux";
-import { restoreUserFromLocalStorage } from "./redux/actions";
+// src/App.jsx
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import SignUpp from './Components/SignUpp';
+import ResetPassword from './Components/ResetPassword';
+import ForgotPassword from './Components/ForgotPassword';
+import VerifyEmail from './Components/VerifyEmail';
 
 function App() {
-  const dispatch = useDispatch();
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
-
-  // Restore user session on app load
-  useEffect(() => {
-    dispatch(restoreUserFromLocalStorage());
-  }, [dispatch]);
-
-  useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-    };
-  }, []);
-
   return (
-    <>
-      <SignUpp />
-    </>
+    <Routes>
+      <Route path="/" element={<SignUpp />} />
+      <Route path="/login" element={<SignUpp />} />
+      <Route path="/signup" element={<SignUpp />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/verify-email" element={<VerifyEmail />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
 

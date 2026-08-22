@@ -1,186 +1,57 @@
+// src/Components/SignUpp.jsx
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Modal, ModalBody } from "reactstrap";
+import { Modal, ModalBody, ModalHeader } from "reactstrap";
+import { useNavigate } from "react-router-dom";
+
 import {
   login,
   loginFailure,
   signup,
   verifyOtp,
   resendVerification,
-} from "../redux/actions";
+  clearAuthError,
+  clearAuthMessage,
+} from "../redux/actions/authentication";
+import { 
+  IconMail, 
+  IconPhone, 
+  IconLock, 
+  IconEye, 
+  IconEyeOff, 
+  IconAlert,
+  IconPerson,
+  IconWheel,
+  IconMessage,
+  IconEnvelopeLarge,
+  IconClose
+} from "../icons";
+import './SignUpp.css'; // Import the CSS file
 
 const OTP_LENGTH = 6;
 const RESEND_SECONDS = 60;
+
 
 function getIdentifierType(value) {
   if (!value) return null;
   return value.includes("@") ? "email" : "phone";
 }
 
-// ---- icons (inline, no new deps) -----------------------------------
-
-const IconMail = (props) => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" {...props}>
-    <path
-      d="M3 6.5A2.5 2.5 0 0 1 5.5 4h13A2.5 2.5 0 0 1 21 6.5v11a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5v-11Z"
-      stroke="currentColor"
-      strokeWidth="1.6"
-    />
-    <path
-      d="m4 6.5 8 6 8-6"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-    />
-  </svg>
-);
-const IconPhone = (props) => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" {...props}>
-    <path
-      d="M6.6 10.8c1.3 2.6 3.4 4.7 6 6l2-2c.3-.3.7-.4 1-.3 1.1.4 2.3.6 3.5.6.6 0 1 .4 1 1v3.4c0 .6-.4 1-1 1C10.6 20.5 3.5 13.4 3.5 4.9c0-.6.4-1 1-1H8c.6 0 1 .4 1 1 0 1.2.2 2.4.6 3.5.1.3 0 .7-.3 1l-2 2Z"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
-const IconLock = (props) => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" {...props}>
-    <rect
-      x="4.5"
-      y="10.5"
-      width="15"
-      height="9.5"
-      rx="2"
-      stroke="currentColor"
-      strokeWidth="1.6"
-    />
-    <path
-      d="M8 10.5V7.5a4 4 0 1 1 8 0v3"
-      stroke="currentColor"
-      strokeWidth="1.6"
-    />
-  </svg>
-);
-const IconEye = (props) => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" {...props}>
-    <path
-      d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"
-      stroke="currentColor"
-      strokeWidth="1.6"
-    />
-    <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.6" />
-  </svg>
-);
-const IconEyeOff = (props) => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" {...props}>
-    <path
-      d="M3.5 3.5l17 17"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-    />
-    <path
-      d="M10.6 5.6A9.9 9.9 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a15.4 15.4 0 0 1-3.2 4.1M6.6 6.9C4 8.7 2.5 12 2.5 12s3.5 6.5 9.5 6.5c1.2 0 2.3-.2 3.3-.6"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-    />
-    <path
-      d="M9.9 10a3 3 0 0 0 4.1 4.1"
-      stroke="currentColor"
-      strokeWidth="1.6"
-    />
-  </svg>
-);
-const IconPerson = (props) => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" {...props}>
-    <circle cx="12" cy="8" r="3.4" stroke="currentColor" strokeWidth="1.6" />
-    <path
-      d="M5 20c1-3.5 4-5.4 7-5.4s6 1.9 7 5.4"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-    />
-  </svg>
-);
-const IconWheel = (props) => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" {...props}>
-    <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.6" />
-    <circle cx="12" cy="12" r="1.8" fill="currentColor" />
-    <path
-      d="M12 4.5V9M12 15v4.5M5.3 8l3.6 2.4M15.1 13.6l3.6 2.4M18.7 8l-3.6 2.4M8.9 13.6 5.3 16"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-    />
-  </svg>
-);
-const IconAlert = (props) => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" {...props}>
-    <path
-      d="M12 3.5 21.5 20h-19L12 3.5Z"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M12 9.5v4.5"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-    />
-    <circle cx="12" cy="16.7" r="0.9" fill="currentColor" />
-  </svg>
-);
-const IconMessage = (props) => (
-  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" {...props}>
-    <path
-      d="M4 5.5h16v10H8.5L4 19V5.5Z"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
-const IconEnvelopeLarge = (props) => (
-  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" {...props}>
-    <path
-      d="M3 6.5A2.5 2.5 0 0 1 5.5 4h13A2.5 2.5 0 0 1 21 6.5v11a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5v-11Z"
-      stroke="currentColor"
-      strokeWidth="1.6"
-    />
-    <path
-      d="m4 6.5 8 6 8-6"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-    />
-  </svg>
-);
-
-// Enhanced RouteArt with clear Start/Stop labels
+// RouteArt component with fixed SVG height
 const RouteArt = () => (
   <svg
     viewBox="0 0 320 220"
     width="100%"
-    height="auto"
+    height="220"
     className="route_art"
     aria-hidden="true"
   >
-    {/* Start point with label */}
     <circle cx="46" cy="168" r="7" className="route_pin_fill" />
     <circle cx="46" cy="168" r="12" className="route_pin_ring" />
-    {/* <text x="20" y="196" className="route_label_start" fontSize="11" fontWeight="600" fill="currentColor">START</text> */}
     <text x="12" y="210" className="route_label_start_sub" fontSize="8" opacity="0.6" fill="currentColor">Pickup</text>
-
-    {/* Destination point with label */}
     <circle cx="272" cy="54" r="7" className="route_pin_fill" />
     <circle cx="272" cy="54" r="12" className="route_pin_ring" />
-    {/* <text x="246" y="42" className="route_label_dest" fontSize="11" fontWeight="600" fill="currentColor">STOP</text> */}
     <text x="242" y="32" className="route_label_dest_sub" fontSize="8" opacity="0.6" fill="currentColor">Drop-off</text>
-
-    {/* Route path with animated dot */}
     <path
       d="M46 168 C 110 168, 90 60, 272 54"
       className="route_path"
@@ -195,8 +66,6 @@ const RouteArt = () => (
         path="M46 168 C 110 168, 90 60, 272 54"
       />
     </circle>
-
-    {/* Small car icon at moving dot */}
     <g className="route_car">
       <animateMotion
         dur="3.2s"
@@ -209,6 +78,7 @@ const RouteArt = () => (
   </svg>
 );
 
+// OTP Input Component
 function OtpInput({ value, onChange, inputRefs }) {
   const inputsRef = useRef([]);
 
@@ -264,11 +134,12 @@ function OtpInput({ value, onChange, inputRefs }) {
 }
 
 export default function SignUpp() {
+  const navigate = useNavigate();
   const loggedInUser = useSelector((state) => state?.auth?.user);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [tab, setTab] = useState(true); // true = login, false = register
-  const [role, setRole] = useState("passenger"); // "passenger" | "driver"
+  const [tab, setTab] = useState(true);
+  const [role, setRole] = useState("passenger");
   const dispatch = useDispatch();
 
   const [loginIdentifier, setLoginIdentifier] = useState("");
@@ -298,7 +169,6 @@ export default function SignUpp() {
     return () => clearTimeout(t);
   }, [modalOpen, resendSeconds]);
 
-  // Auto-focus first OTP input when modal opens
   useEffect(() => {
     if (modalOpen && verificationType === "phone") {
       setTimeout(() => {
@@ -309,22 +179,25 @@ export default function SignUpp() {
     }
   }, [modalOpen, verificationType]);
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setAuthSuccess(false);
-    try {
-      await dispatch(login({ identifier: loginIdentifier, password, role }));
-      setLoading(false);
-      setAuthSuccess(true);
-      setAuthMessage(`✅ Successfully logged in as ${role}!`);
-      setLoginIdentifier("");
-      setPassword("");
-    } catch (error) {
-      setLoading(false);
-      console.error("Login failed:", error);
-    }
-  };
+  // In SignUpp.jsx - Update the handleLogin function
+const handleLogin = async (e) => {
+  e.preventDefault(); // Make sure this is present
+  setLoading(true);
+  setAuthSuccess(false);
+  try {
+    await dispatch(login({ identifier: loginIdentifier, password, role }));
+    setLoading(false);
+    setAuthSuccess(true);
+    setAuthMessage(`✅ Successfully logged in as ${role}!`);
+    setLoginIdentifier("");
+    setPassword("");
+  } catch (error) {
+    setLoading(false);
+    // The error message will be set by the reducer
+    console.error("Login failed:", error);
+    // Do NOT redirect or refresh here
+  }
+};
 
   const handleSignup = async (e) => {
     e.preventDefault();
@@ -357,7 +230,7 @@ export default function SignUpp() {
     setVerifying(true);
     setOtpError(null);
     try {
-      const result = await dispatch(
+      await dispatch(
         verifyOtp({ identifier: signupIdentifier, otp }),
       );
       setVerifying(false);
@@ -384,7 +257,11 @@ export default function SignUpp() {
   };
 
   useEffect(() => {
-    return () => dispatch(loginFailure(null));
+    return () => {
+      dispatch(loginFailure(null));
+      dispatch(clearAuthError());
+      dispatch(clearAuthMessage());
+    };
   }, [dispatch]);
 
   useEffect(() => {
@@ -396,6 +273,10 @@ export default function SignUpp() {
       return () => clearTimeout(timer);
     }
   }, [authSuccess]);
+
+  const handleForgotPassword = () => {
+    navigate('/forgot-password');
+  };
 
   const identifierIcon =
     getIdentifierType(tab ? loginIdentifier : signupIdentifier) === "phone" ? (
@@ -555,7 +436,7 @@ export default function SignUpp() {
                   <button
                     type="button"
                     className="link_btn"
-                    onClick={() => alert("Forgot password flow would go here")}
+                    onClick={handleForgotPassword}
                   >
                     Forgot password?
                   </button>
@@ -664,15 +545,30 @@ export default function SignUpp() {
         </main>
       </div>
 
-      <Modal 
-        isOpen={modalOpen} 
-        centered 
-        toggle={() => setModalOpen(false)}
-        className="otp_modal"
-        backdrop="static"
-      >
-        <ModalBody className="verify_modal_body">
-          {verificationType === "email" ? (
+ <Modal 
+  isOpen={modalOpen} 
+  centered 
+  toggle={() => {
+    setModalOpen(false);
+    setOtpError(null);
+  }}
+  className="otp_modal"
+  backdrop="static"
+>
+  <ModalBody className="verify_modal_body">
+    {/* Add close button at the top right */}
+    <button 
+      className="modal_close_btn"
+      onClick={() => {
+        setModalOpen(false);
+        setOtpError(null);
+      }}
+      aria-label="Close modal"
+    >
+      <IconClose />
+    </button>
+    
+    {verificationType === "email" ? (
             <>
               <div className="verify_icon_circle">
                 <IconEnvelopeLarge />
@@ -734,202 +630,6 @@ export default function SignUpp() {
           )}
         </ModalBody>
       </Modal>
-
-      <style jsx>{`
-        /* Enhanced OTP Modal Styles */
-        .otp_modal .modal-content {
-          border-radius: 20px;
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-          border: none;
-          background: white;
-        }
-
-        .verify_modal_body {
-          padding: 40px 32px 32px 32px;
-          background: white;
-          border-radius: 20px;
-        }
-
-        .verify_icon_circle {
-          width: 64px;
-          height: 64px;
-          border-radius: 50%;
-          background: var(--accent-soft, #eff4ff);
-          color: var(--accent, #0d6efd);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin: 0 auto 16px;
-          font-size: 28px;
-        }
-
-        .verify_title {
-          font-size: 20px;
-          font-weight: 700;
-          margin-bottom: 8px;
-          color: #0b1220;
-        }
-
-        .verify_copy {
-          font-size: 14px;
-          color: #475467;
-          margin-bottom: 20px;
-        }
-
-        .verify_copy strong {
-          color: #0b1220;
-          font-weight: 600;
-        }
-
-        .otp_input_group {
-          display: flex;
-          justify-content: center;
-          gap: 12px;
-          margin: 24px 0 20px 0;
-        }
-
-        .otp_digit {
-          width: 48px;
-          height: 56px;
-          text-align: center;
-          font-size: 22px;
-          font-weight: 700;
-          border-radius: 12px;
-          border: 2px solid #e4e7ec;
-          background-color: #f9fafb;
-          color: #0b1220;
-          transition: all 150ms ease;
-        }
-
-        .otp_digit:focus {
-          outline: none;
-          border-color: var(--accent, #0d6efd);
-          box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.15);
-          background: #ffffff;
-          transform: scale(1.05);
-        }
-
-        .otp_digit:hover {
-          border-color: #b0b8c4;
-        }
-
-        .verify_submit {
-          margin-top: 8px;
-          width: 100%;
-          padding: 14px;
-          font-size: 15px;
-          font-weight: 600;
-          border-radius: 12px;
-          background: var(--accent, #0d6efd);
-          color: white;
-          border: none;
-          cursor: pointer;
-          transition: all 150ms ease;
-        }
-
-        .verify_submit:hover:not(:disabled) {
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
-        }
-
-        .verify_submit:active:not(:disabled) {
-          transform: scale(0.98);
-        }
-
-        .verify_submit:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .resend_btn {
-          display: block;
-          margin: 16px auto 0;
-          font-size: 14px;
-          color: var(--accent, #0d6efd);
-          background: none;
-          border: none;
-          cursor: pointer;
-          padding: 8px 16px;
-          border-radius: 8px;
-          transition: all 150ms ease;
-        }
-
-        .resend_btn:hover:not(:disabled) {
-          background: #f2f4f7;
-        }
-
-        .resend_btn:disabled {
-          color: #98a2b3;
-          cursor: not-allowed;
-        }
-
-        .modal_alert {
-          margin: 12px 0 0 0;
-          text-align: left;
-          padding: 10px 14px;
-          border-radius: 8px;
-          font-size: 13px;
-        }
-
-        /* Enhanced Route Art Styles */
-        .route_art {
-          width: 100%;
-          max-width: 320px;
-        }
-
-        .route_pin_fill {
-          fill: var(--accent, #0d6efd);
-        }
-
-        .route_pin_ring {
-          fill: none;
-          stroke: var(--accent, #0d6efd);
-          stroke-width: 1.5;
-          opacity: 0.5;
-        }
-
-        .route_path {
-          stroke: currentColor;
-          opacity: 0.35;
-        }
-
-        .route_dot {
-          fill: var(--accent, #0d6efd);
-        }
-
-        .route_car {
-          opacity: 0.9;
-        }
-
-        .route_label_start {
-          fill: currentColor;
-        }
-
-        .route_label_dest {
-          fill: currentColor;
-        }
-
-        .route_label_start_sub,
-        .route_label_dest_sub {
-          fill: currentColor;
-        }
-
-        @media (max-width: 768px) {
-          .otp_digit {
-            width: 40px;
-            height: 48px;
-            font-size: 18px;
-          }
-
-          .verify_modal_body {
-            padding: 24px 16px;
-          }
-
-          .otp_input_group {
-            gap: 8px;
-          }
-        }
-      `}</style>
     </div>
   );
 }

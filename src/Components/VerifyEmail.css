@@ -1,0 +1,177 @@
+/* src/Components/VerifyEmail.css */
+.verify_email_container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+  background: #f8fafc;
+  font-family: "Poppins", sans-serif;
+}
+
+.verify_email_card {
+  background: white;
+  padding: 48px 40px;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  max-width: 440px;
+  width: 100%;
+  text-align: center;
+}
+
+.verify_icon_circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  margin: 0 auto 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+}
+
+.verify_icon_circle.loading {
+  background: #eff4ff;
+  color: #0d6efd;
+}
+
+.verify_icon_circle.success {
+  background: #e6f4ea;
+  color: #1e7e34;
+}
+
+.verify_icon_circle.error {
+  background: #fef3f2;
+  color: #991b1b;
+}
+
+.spinner_large {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(13, 110, 253, 0.2);
+  border-top-color: #0d6efd;
+  border-radius: 50%;
+  animation: spin 700ms linear infinite;
+}
+
+.success_icon {
+  font-size: 40px;
+  font-weight: 700;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.verify_title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0b1220;
+  margin: 0 0 12px 0;
+}
+
+.verify_title.success_title {
+  color: #1e7e34;
+}
+
+.verify_title.error_title {
+  color: #991b1b;
+}
+
+.verify_subtitle {
+  font-size: 15px;
+  color: #475467;
+  line-height: 1.6;
+  margin: 0 0 24px 0;
+}
+
+.verify_subtitle.error_message {
+  color: #991b1b;
+  background: #fef3f2;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #fecaca;
+}
+
+.verify_actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.verify_actions .auth_submit {
+  width: 100%;
+  padding: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.verify_actions .auth_submit:not(.secondary) {
+  background: #0d6efd;
+  color: white;
+}
+
+.verify_actions .auth_submit:not(.secondary):hover {
+  background: #0b5ed7;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+}
+
+.verify_actions .auth_submit.secondary {
+  background: transparent;
+  color: #0d6efd;
+  border: 1.5px solid #0d6efd;
+}
+
+.verify_actions .auth_submit.secondary:hover {
+  background: #f2f4f7;
+}
+
+.redirect_note {
+  font-size: 13px;
+  color: #98a2b3;
+  margin-top: 16px;
+}
+
+.help_text {
+  font-size: 13px;
+  color: #475467;
+  margin-top: 16px;
+}
+
+.help_text a {
+  color: #0d6efd;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.help_text a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 576px) {
+  .verify_email_card {
+    padding: 32px 20px;
+  }
+
+  .verify_icon_circle {
+    width: 64px;
+    height: 64px;
+    font-size: 24px;
+  }
+
+  .verify_title {
+    font-size: 20px;
+  }
+
+  .verify_subtitle {
+    font-size: 14px;
+  }
+}   
