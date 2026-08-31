@@ -106,23 +106,28 @@ export const signup = (userData) => async (dispatch) => {
   }
 };
 
+// src/redux/actions/authentication.js
+
 export const verifyOtp = (data) => async (dispatch) => {
   dispatch({ type: AUTH_ACTION_TYPES.VERIFY_EMAIL_REQUEST });
   try {
-    // For phone OTP verification
-    const response = await api.post('/verify-phone', {
+    // Use the correct endpoint - /verify-otp
+    const response = await api.post('/verify-otp', {
       phone_number: data.identifier,
       otp: data.otp,
     });
     
     dispatch({
       type: AUTH_ACTION_TYPES.VERIFY_EMAIL_SUCCESS,
-      payload: { message: 'Verification successful' },
+      payload: { 
+        message: response.data.message || 'Phone number verified successfully',
+        verified: true 
+      },
     });
     return response.data;
   } catch (error) {
     console.error('OTP verification error:', error.response?.data);
-    const errorMessage = error.response?.data?.detail || 'Verification failed';
+    const errorMessage = error.response?.data?.detail || 'Verification failed. Please check your code.';
     dispatch({
       type: AUTH_ACTION_TYPES.VERIFY_EMAIL_FAILURE,
       payload: errorMessage,
