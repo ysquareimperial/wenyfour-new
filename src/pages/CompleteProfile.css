@@ -1,0 +1,225 @@
+/* src/pages/CompleteProfile.css */
+.complete_profile_page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  padding: 40px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.complete_profile_container {
+  max-width: 800px;
+  width: 100%;
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+.profile_header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.profile_header h1 {
+  font-size: 32px;
+  color: #1a1a2e;
+  margin-bottom: 10px;
+}
+
+.profile_header p {
+  color: #666;
+  font-size: 16px;
+}
+
+.profile_form {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.form_section {
+  border: 1px solid #e8e8e8;
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.form_section h3 {
+  font-size: 18px;
+  color: #1a1a2e;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.field_group {
+  margin-bottom: 20px;
+}
+
+.field_group:last-child {
+  margin-bottom: 0;
+}
+
+.field_label {
+  display: block;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+.input_field {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 15px;
+  transition: border-color 0.2s;
+  background: white;
+}
+
+.input_field:focus {
+  outline: none;
+  border-color: #4a90e2;
+}
+
+.input_field[type="file"] {
+  padding: 10px;
+}
+
+textarea.input_field {
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
+}
+
+select.input_field {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+.field_hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #888;
+}
+
+.auth_submit {
+  width: 100%;
+  padding: 14px;
+  background: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.auth_submit:hover:not(:disabled) {
+  background: #357abd;
+}
+
+.auth_submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.auth_alert {
+  background: #fde8e8;
+  color: #c62828;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Success Modal */
+.success_modal .modal-content {
+  border-radius: 20px;
+  border: none;
+  overflow: hidden;
+}
+
+.success_modal_body {
+  text-align: center;
+  padding: 48px 40px;
+}
+
+.success_icon {
+  width: 80px;
+  height: 80px;
+  background: #e6f4ea;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  color: #1e7e34;
+}
+
+.success_icon svg {
+  width: 40px;
+  height: 40px;
+}
+
+.success_modal_body h3 {
+  font-size: 24px;
+  color: #1a1a2e;
+  margin-bottom: 12px;
+}
+
+.success_modal_body p {
+  color: #666;
+  font-size: 15px;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.verification_notice {
+  background: #fef9e7;
+  padding: 16px;
+  border-radius: 8px;
+  border-left: 4px solid #f39c12;
+  color: #856404;
+}
+
+/* Driver specific styles */
+.driver_profile .form_section:first-of-type {
+  border-color: #3498db;
+}
+
+@media (max-width: 768px) {
+  .complete_profile_container {
+    padding: 20px;
+  }
+  
+  .profile_header h1 {
+    font-size: 24px;
+  }
+  
+  .form_section {
+    padding: 16px;
+  }
+}

@@ -24,6 +24,7 @@ export const AUTH_ACTION_TYPES = {
   RESEND_VERIFICATION_FAILURE: 'RESEND_VERIFICATION_FAILURE',
   CLEAR_AUTH_ERROR: 'CLEAR_AUTH_ERROR',
   CLEAR_AUTH_MESSAGE: 'CLEAR_AUTH_MESSAGE',
+  UPDATE_USER_PROFILE: 'UPDATE_USER_PROFILE',
 };
 
 // Helper function to check if identifier is email
@@ -36,22 +37,33 @@ const isEmail = (identifier) => {
 export const login = (credentials) => async (dispatch) => {
   dispatch({ type: AUTH_ACTION_TYPES.LOGIN_REQUEST });
   try {
-    // Prepare the request body based on identifier type
     const requestBody = {
       password: credentials.password,
     };
 
-    // Check if identifier is email or phone
     if (isEmail(credentials.identifier)) {
       requestBody.email = credentials.identifier;
     } else {
       requestBody.phone_number = credentials.identifier;
     }
 
-    // Make the API call with the properly formatted body
     const response = await api.post('/auth/login', requestBody);
     
-    const { access_token, user } = response.data;
+    const { access_token, user_id, active_role, roles } = response.data;
+    
+    // Find the profile completion status for the active role
+    const activeRoleData = roles.find(r => r.role === active_role);
+    const profileComplete = activeRoleData?.profile_complete || false;
+    
+    // Create user object with all necessary data
+    const user = {
+      id: user_id,
+      role: active_role,
+      profile_complete: profileComplete,
+      roles: roles,
+      active_role: active_role,
+      // You might want to fetch the full user profile here
+    };
     
     if (access_token) {
       localStorage.setItem('access_token', access_token);
@@ -62,7 +74,7 @@ export const login = (credentials) => async (dispatch) => {
       type: AUTH_ACTION_TYPES.LOGIN_SUCCESS,
       payload: { user },
     });
-    return response.data;
+    return { user, access_token };
   } catch (error) {
     console.error('Login error:', error.response?.data);
     const errorMessage = error.response?.data?.detail || 'Login failed. Please check your credentials.';
@@ -106,12 +118,9 @@ export const signup = (userData) => async (dispatch) => {
   }
 };
 
-// src/redux/actions/authentication.js
-
 export const verifyOtp = (data) => async (dispatch) => {
   dispatch({ type: AUTH_ACTION_TYPES.VERIFY_EMAIL_REQUEST });
   try {
-    // Use the correct endpoint - /verify-otp
     const response = await api.post('/verify-otp', {
       phone_number: data.identifier,
       otp: data.otp,
@@ -167,13 +176,8 @@ export const forgotPassword = (data) => async (dispatch) => {
       requestBody.phone_number = data.identifier;
     }
 
-    console.log('Forgot password request:', requestBody);
-
     const response = await api.post('/forgot-password', requestBody);
     
-    console.log('Forgot password response:', response.data);
-    
-    // Extract the message from the response
     let message = 'Reset link sent successfully';
     if (typeof response.data === 'string') {
       message = response.data;
@@ -188,8 +192,6 @@ export const forgotPassword = (data) => async (dispatch) => {
     return response.data;
   } catch (error) {
     console.error('Forgot password error:', error);
-    console.error('Error response:', error.response?.data);
-    
     let errorMessage = 'Failed to send reset link';
     if (error.response?.data) {
       if (typeof error.response.data === 'string') {
@@ -281,6 +283,11 @@ export const logout = () => (dispatch) => {
   localStorage.removeItem('user');
   dispatch({ type: AUTH_ACTION_TYPES.LOGOUT });
 };
+
+export const updateUserProfile = (userData) => ({
+  type: AUTH_ACTION_TYPES.UPDATE_USER_PROFILE,
+  payload: userData,
+});
 
 export const loginFailure = (error) => ({
   type: AUTH_ACTION_TYPES.LOGIN_FAILURE,

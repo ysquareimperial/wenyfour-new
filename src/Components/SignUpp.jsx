@@ -214,24 +214,46 @@ export default function SignUpp() {
   }, [modalOpen, verificationType]);
 
   // In SignUpp.jsx - Update the handleLogin function
-  const handleLogin = async (e) => {
-    e.preventDefault(); // Make sure this is present
-    setLoading(true);
-    setAuthSuccess(false);
-    try {
-      await dispatch(login({ identifier: loginIdentifier, password, role }));
-      setLoading(false);
-      setAuthSuccess(true);
-      setAuthMessage(`✅ Successfully logged in as ${role}!`);
-      setLoginIdentifier("");
-      setPassword("");
-    } catch (error) {
-      setLoading(false);
-      // The error message will be set by the reducer
-      console.error("Login failed:", error);
-      // Do NOT redirect or refresh here
+  // In SignUpp.jsx, update the handleLogin function
+const handleLogin = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setAuthSuccess(false);
+  try {
+    const response = await dispatch(login({ identifier: loginIdentifier, password, role }));
+    setLoading(false);
+    setAuthSuccess(true);
+    setAuthMessage(`✅ Successfully logged in as ${role}!`);
+    setLoginIdentifier("");
+    setPassword("");
+    
+    // The user data is in response.user
+    if (response && response.user) {
+      const user = response.user;
+      
+      // Check if profile is complete
+      if (!user.profile_complete) {
+        // Redirect to profile completion based on role
+        if (user.role === 'passenger') {
+          navigate('/passenger/complete-profile');
+        } else if (user.role === 'driver') {
+          navigate('/driver/complete-profile');
+        }
+      } else {
+        // Redirect to appropriate dashboard
+        if (user.role === 'passenger') {
+          navigate('/passenger/dashboard');
+        } else if (user.role === 'driver') {
+          navigate('/driver/dashboard');
+        }
+      }
     }
-  };
+  } catch (error) {
+    setLoading(false);
+    console.error("Login failed:", error);
+    // Error message is handled by the reducer
+  }
+};
 
   const handleSignup = async (e) => {
     e.preventDefault();
@@ -596,8 +618,6 @@ export default function SignUpp() {
           </div>
         </main>
       </div>
-      // Inside the Modal component, replace the phone verification section
-      with:
       <Modal
         isOpen={modalOpen}
         centered

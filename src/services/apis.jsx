@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 // In Vite, use import.meta.env instead of process.env
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://wenyfour.com';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.wenyfour.com.ng';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
