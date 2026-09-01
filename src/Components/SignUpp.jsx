@@ -29,7 +29,7 @@ import {
 import "./Register.css"; // Import the CSS file
 
 const OTP_LENGTH = 6;
-const RESEND_SECONDS = 60;
+const RESEND_SECONDS = 180;
 
 function getIdentifierType(value) {
   if (!value) return null;

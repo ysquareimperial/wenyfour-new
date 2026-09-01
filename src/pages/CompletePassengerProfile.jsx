@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { updatePassengerProfile } from '../redux/actions/profile';
 import { Modal, ModalBody } from 'reactstrap';
-import { IconClose } from '../icons';
+import { IconClose, IconAlert, IconPerson, IconMail, IconPhone, IconLock } from '../icons';
 import './CompleteProfile.css';
 
 const CompletePassengerProfile = () => {
@@ -65,75 +65,87 @@ const CompletePassengerProfile = () => {
 
         {error && (
           <div className="auth_alert">
+            <IconAlert />
             <span>{error}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="profile_form">
+        <form onSubmit={handleSubmit} className="auth_form">
           <div className="form_section">
             <h3>Personal Information</h3>
             
             <div className="field_group">
               <label className="field_label">Full Name *</label>
-              <input
-                className="input_field"
-                type="text"
-                name="full_name"
-                value={formData.full_name}
-                onChange={handleChange}
-                required
-                placeholder="Enter your full name"
-              />
+              <div className="input_wrap">
+                <span className="input_icon"><IconPerson /></span>
+                <input
+                  className="input_field with_icon"
+                  type="text"
+                  name="full_name"
+                  value={formData.full_name}
+                  onChange={handleChange}
+                  required
+                  placeholder="Enter your full name"
+                />
+              </div>
             </div>
 
             <div className="field_group">
               <label className="field_label">Date of Birth</label>
-              <input
-                className="input_field"
-                type="date"
-                name="date_of_birth"
-                value={formData.date_of_birth}
-                onChange={handleChange}
-              />
+              <div className="input_wrap">
+                <input
+                  className="input_field"
+                  type="date"
+                  name="date_of_birth"
+                  value={formData.date_of_birth}
+                  onChange={handleChange}
+                />
+              </div>
             </div>
 
             <div className="field_group">
               <label className="field_label">Address</label>
-              <input
-                className="input_field"
-                type="text"
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
-                placeholder="Enter your home address"
-              />
+              <div className="input_wrap">
+                <input
+                  className="input_field"
+                  type="text"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleChange}
+                  placeholder="Enter your home address"
+                />
+              </div>
             </div>
 
             <div className="field_group">
               <label className="field_label">Blood Group</label>
-              <select
-                className="input_field"
-                name="blood_group"
-                value={formData.blood_group}
-                onChange={handleChange}
-              >
-                <option value="">Select blood group</option>
-                {bloodGroups.map(group => (
-                  <option key={group} value={group}>{group}</option>
-                ))}
-              </select>
+              <div className="input_wrap">
+                <select
+                  className="input_field"
+                  name="blood_group"
+                  value={formData.blood_group}
+                  onChange={handleChange}
+                >
+                  <option value="">Select blood group</option>
+                  {bloodGroups.map(group => (
+                    <option key={group} value={group}>{group}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <div className="field_group">
               <label className="field_label">Health Conditions</label>
-              <textarea
-                className="input_field"
-                name="health_conditions"
-                value={formData.health_conditions}
-                onChange={handleChange}
-                placeholder="Any health conditions we should know about?"
-                rows="3"
-              />
+              <div className="input_wrap">
+                <textarea
+                  className="input_field"
+                  name="health_conditions"
+                  value={formData.health_conditions}
+                  onChange={handleChange}
+                  placeholder="Any health conditions we should know about?"
+                  rows="3"
+                />
+              </div>
             </div>
           </div>
 
@@ -142,41 +154,48 @@ const CompletePassengerProfile = () => {
             
             <div className="field_group">
               <label className="field_label">Next of Kin Name</label>
-              <input
-                className="input_field"
-                type="text"
-                name="next_of_kin_name"
-                value={formData.next_of_kin_name}
-                onChange={handleChange}
-                placeholder="Full name of emergency contact"
-              />
+              <div className="input_wrap">
+                <input
+                  className="input_field"
+                  type="text"
+                  name="next_of_kin_name"
+                  value={formData.next_of_kin_name}
+                  onChange={handleChange}
+                  placeholder="Full name of emergency contact"
+                />
+              </div>
             </div>
 
             <div className="field_group">
               <label className="field_label">Relationship</label>
-              <select
-                className="input_field"
-                name="next_of_kin_relationship"
-                value={formData.next_of_kin_relationship}
-                onChange={handleChange}
-              >
-                <option value="">Select relationship</option>
-                {relationships.map(rel => (
-                  <option key={rel} value={rel}>{rel}</option>
-                ))}
-              </select>
+              <div className="input_wrap">
+                <select
+                  className="input_field"
+                  name="next_of_kin_relationship"
+                  value={formData.next_of_kin_relationship}
+                  onChange={handleChange}
+                >
+                  <option value="">Select relationship</option>
+                  {relationships.map(rel => (
+                    <option key={rel} value={rel}>{rel}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <div className="field_group">
               <label className="field_label">Emergency Contact Number</label>
-              <input
-                className="input_field"
-                type="tel"
-                name="emergency_contact"
-                value={formData.emergency_contact}
-                onChange={handleChange}
-                placeholder="Phone number for emergency contact"
-              />
+              <div className="input_wrap">
+                <span className="input_icon"><IconPhone /></span>
+                <input
+                  className="input_field with_icon"
+                  type="tel"
+                  name="emergency_contact"
+                  value={formData.emergency_contact}
+                  onChange={handleChange}
+                  placeholder="Phone number for emergency contact"
+                />
+              </div>
             </div>
           </div>
 
@@ -184,14 +203,16 @@ const CompletePassengerProfile = () => {
             <h3>Identification</h3>
             <div className="field_group">
               <label className="field_label">NIN (National Identification Number)</label>
-              <input
-                className="input_field"
-                type="text"
-                name="nin"
-                value={formData.nin}
-                onChange={handleChange}
-                placeholder="Enter your NIN"
-              />
+              <div className="input_wrap">
+                <input
+                  className="input_field"
+                  type="text"
+                  name="nin"
+                  value={formData.nin}
+                  onChange={handleChange}
+                  placeholder="Enter your NIN"
+                />
+              </div>
               <small className="field_hint">We'll verify your NIN for security purposes.</small>
             </div>
           </div>

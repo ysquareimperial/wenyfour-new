@@ -1,60 +1,69 @@
 /* src/pages/CompleteProfile.css */
+
 .complete_profile_page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: #ffffff;
   padding: 40px 20px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
 }
 
 .complete_profile_container {
-  max-width: 800px;
+  max-width: 600px;
   width: 100%;
-  background: white;
-  border-radius: 20px;
-  padding: 40px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  background: #ffffff;
+  padding: 0;
 }
 
 .profile_header {
-  text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: 32px;
 }
 
 .profile_header h1 {
-  font-size: 32px;
-  color: #1a1a2e;
-  margin-bottom: 10px;
+  font-size: 28px;
+  font-weight: 700;
+  color: #0b1220;
+  margin-bottom: 8px;
+  font-family: "Plus Jakarta Sans", "Poppins", sans-serif;
 }
 
 .profile_header p {
-  color: #666;
-  font-size: 16px;
+  color: #475467;
+  font-size: 15px;
+  line-height: 1.5;
 }
 
-.profile_form {
+/* Form sections - matching SignUpp styles */
+.auth_form {
   display: flex;
   flex-direction: column;
-  gap: 30px;
+  gap: 4px;
 }
 
 .form_section {
-  border: 1px solid #e8e8e8;
-  border-radius: 12px;
-  padding: 24px;
+  margin-bottom: 32px;
+  padding-bottom: 32px;
+  border-bottom: 1.5px solid #e4e7ec;
+}
+
+.form_section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
 }
 
 .form_section h3 {
-  font-size: 18px;
-  color: #1a1a2e;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0b1220;
   margin-bottom: 20px;
-  padding-bottom: 12px;
-  border-bottom: 2px solid #f0f0f0;
+  font-family: "Plus Jakarta Sans", "Poppins", sans-serif;
 }
 
+/* Field group - matching SignUpp */
 .field_group {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .field_group:last-child {
@@ -63,35 +72,59 @@
 
 .field_label {
   display: block;
+  font-size: 12.5px;
   font-weight: 500;
-  color: #333;
+  color: #0b1220;
   margin-bottom: 6px;
-  font-size: 14px;
+}
+
+.input_wrap {
+  position: relative;
+}
+
+.input_icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #98a2b3;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
 }
 
 .input_field {
   width: 100%;
-  padding: 12px 16px;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
-  font-size: 15px;
-  transition: border-color 0.2s;
-  background: white;
+  padding: 12px 14px;
+  padding-left: 42px;
+  border: 1.5px solid #e4e7ec;
+  border-radius: 10px;
+  font-size: 14.5px;
+  color: #0b1220;
+  background-color: #f9fafb;
+  transition: all 150ms ease;
+  font-family: "Poppins", sans-serif;
 }
 
 .input_field:focus {
   outline: none;
-  border-color: #4a90e2;
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 4px #eff4ff;
+  background-color: #ffffff;
+}
+
+.input_field:not(.with_icon) {
+  padding-left: 14px;
 }
 
 .input_field[type="file"] {
-  padding: 10px;
+  padding: 10px 14px;
 }
 
 textarea.input_field {
   resize: vertical;
   min-height: 80px;
-  font-family: inherit;
+  font-family: "Poppins", sans-serif;
 }
 
 select.input_field {
@@ -99,30 +132,67 @@ select.input_field {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
+  padding-right: 36px;
+}
+
+select.input_field:not(.with_icon) {
+  padding-left: 14px;
 }
 
 .field_hint {
   display: block;
   margin-top: 4px;
   font-size: 12px;
-  color: #888;
+  color: #98a2b3;
 }
 
+/* Auth alert - matching SignUpp */
+.auth_alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: #fef3f2;
+  border: 1px solid #fecdca;
+  color: #b42318;
+  font-size: 13px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 18px;
+}
+
+.auth_alert svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* Submit button - matching SignUpp */
 .auth_submit {
   width: 100%;
-  padding: 14px;
-  background: #4a90e2;
-  color: white;
+  background: #0d6efd;
+  color: #ffffff;
   border: none;
-  border-radius: 8px;
-  font-size: 16px;
+  border-radius: 10px;
+  font-size: 14.5px;
   font-weight: 600;
+  padding: 14px;
   cursor: pointer;
-  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  transition: all 150ms ease;
+  font-family: "Poppins", sans-serif;
+  margin-top: 8px;
 }
 
 .auth_submit:hover:not(:disabled) {
-  background: #357abd;
+  filter: brightness(0.94);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(13, 110, 253, 0.25);
+}
+
+.auth_submit:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 .auth_submit:disabled {
@@ -130,96 +200,140 @@ select.input_field {
   cursor: not-allowed;
 }
 
-.auth_alert {
-  background: #fde8e8;
-  color: #c62828;
-  padding: 12px 16px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
+/* Spinner */
 .spinner {
-  display: inline-block;
   width: 20px;
   height: 20px;
-  border: 2px solid rgba(255,255,255,0.3);
-  border-top-color: white;
+  border: 2.5px solid rgba(255, 255, 255, 0.3);
+  border-top-color: currentColor;
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  animation: spin 700ms linear infinite;
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-/* Success Modal */
+/* Success Modal - matching OTP modal styles */
 .success_modal .modal-content {
-  border-radius: 20px;
-  border: none;
+  border-radius: 20px !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  border: none !important;
   overflow: hidden;
 }
 
 .success_modal_body {
   text-align: center;
-  padding: 48px 40px;
+  padding: 40px 32px 32px 32px;
 }
 
 .success_icon {
-  width: 80px;
-  height: 80px;
-  background: #e6f4ea;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
+  background: #eff4ff;
+  color: #0d6efd;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 20px;
-  color: #1e7e34;
+  margin: 0 auto 16px;
 }
 
 .success_icon svg {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
 }
 
 .success_modal_body h3 {
-  font-size: 24px;
-  color: #1a1a2e;
-  margin-bottom: 12px;
+  font-size: 20px;
+  font-weight: 700;
+  color: #0b1220;
+  margin-bottom: 8px;
+  font-family: "Plus Jakarta Sans", "Poppins", sans-serif;
 }
 
 .success_modal_body p {
-  color: #666;
-  font-size: 15px;
+  font-size: 14px;
+  color: #475467;
   line-height: 1.6;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
+}
+
+.success_modal_body .auth_submit {
+  margin-top: 0;
 }
 
 .verification_notice {
-  background: #fef9e7;
+  background: #fff7e8;
   padding: 16px;
   border-radius: 8px;
-  border-left: 4px solid #f39c12;
+  border-left: 4px solid #ffb020;
   color: #856404;
+  font-size: 13px;
+  text-align: left;
+  margin-bottom: 20px;
 }
 
-/* Driver specific styles */
+/* Driver specific styling */
 .driver_profile .form_section:first-of-type {
-  border-color: #3498db;
+  border-color: #ffb020;
 }
 
+.driver_profile .auth_submit {
+  background: #ffb020;
+  color: #12141a;
+}
+
+.driver_profile .auth_submit:hover:not(:disabled) {
+  box-shadow: 0 4px 16px rgba(255, 176, 32, 0.35);
+}
+
+.driver_profile .success_icon {
+  background: #fff7e8;
+  color: #ffb020;
+}
+
+/* Responsive */
 @media (max-width: 768px) {
-  .complete_profile_container {
-    padding: 20px;
+  .complete_profile_page {
+    padding: 20px 16px;
   }
   
   .profile_header h1 {
     font-size: 24px;
   }
   
-  .form_section {
-    padding: 16px;
+  .profile_header p {
+    font-size: 14px;
+  }
+  
+  .success_modal_body {
+    padding: 24px 20px;
+  }
+}
+
+@media (max-width: 576px) {
+  .complete_profile_page {
+    padding: 16px 12px;
+  }
+  
+  .profile_header h1 {
+    font-size: 20px;
+  }
+  
+  .form_section h3 {
+    font-size: 15px;
+  }
+  
+  .input_field {
+    font-size: 13.5px;
+    padding: 10px 12px;
+    padding-left: 38px;
+  }
+  
+  .input_field:not(.with_icon) {
+    padding-left: 12px;
   }
 }
