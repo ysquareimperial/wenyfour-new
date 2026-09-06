@@ -37,32 +37,32 @@ const isEmail = (identifier) => {
 export const login = (credentials) => async (dispatch) => {
   dispatch({ type: AUTH_ACTION_TYPES.LOGIN_REQUEST });
   try {
-    const requestBody = {
-      password: credentials.password,
-    };
+    // Create form data for OAuth2 password flow
+    const formData = new URLSearchParams();
+    formData.append('grant_type', 'password');
+    formData.append('username', credentials.identifier);
+    formData.append('password', credentials.password);
+    formData.append('scope', '');
+    formData.append('client_id', 'string');
+    formData.append('client_secret', 'string');
 
-    if (isEmail(credentials.identifier)) {
-      requestBody.email = credentials.identifier;
-    } else {
-      requestBody.phone_number = credentials.identifier;
-    }
-
-    const response = await api.post('/auth/login', requestBody);
+    const response = await api.post('/auth/login', formData.toString(), {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    });
     
     const { access_token, user_id, active_role, roles } = response.data;
     
-    // Find the profile completion status for the active role
     const activeRoleData = roles.find(r => r.role === active_role);
     const profileComplete = activeRoleData?.profile_complete || false;
     
-    // Create user object with all necessary data
     const user = {
       id: user_id,
       role: active_role,
       profile_complete: profileComplete,
       roles: roles,
       active_role: active_role,
-      // You might want to fetch the full user profile here
     };
     
     if (access_token) {
@@ -77,7 +77,17 @@ export const login = (credentials) => async (dispatch) => {
     return { user, access_token };
   } catch (error) {
     console.error('Login error:', error.response?.data);
-    const errorMessage = error.response?.data?.detail || 'Login failed. Please check your credentials.';
+    
+    // Extract error message properly
+    let errorMessage = 'Login failed. Please check your credentials.';
+    if (error.response?.data?.detail) {
+      if (Array.isArray(error.response.data.detail)) {
+        errorMessage = error.response.data.detail.map(err => err.msg).join(', ');
+      } else if (typeof error.response.data.detail === 'string') {
+        errorMessage = error.response.data.detail;
+      }
+    }
+    
     dispatch({
       type: AUTH_ACTION_TYPES.LOGIN_FAILURE,
       payload: errorMessage,
