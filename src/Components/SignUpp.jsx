@@ -215,47 +215,56 @@ export default function SignUpp() {
 
   // In SignUpp.jsx - Update the handleLogin function
   // In SignUpp.jsx, update the handleLogin function
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setAuthSuccess(false);
-    try {
-      const response = await dispatch(
-        login({ identifier: loginIdentifier, password, role }),
-      );
-      setLoading(false);
-      setAuthSuccess(true);
-      setAuthMessage(`✅ Successfully logged in as ${role}!`);
-      setLoginIdentifier("");
-      setPassword("");
+  // src/Components/SignUpp.jsx - Update handleLogin function
 
-      // The user data is in response.user
-      if (response && response.user) {
-        const user = response.user;
+const handleLogin = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setAuthSuccess(false);
+  try {
+    const response = await dispatch(
+      login({ identifier: loginIdentifier, password, role }),
+    );
+    setLoading(false);
+    setAuthSuccess(true);
+    setAuthMessage(`✅ Successfully logged in as ${role}!`);
+    setLoginIdentifier("");
+    setPassword("");
 
-        // Check if profile is complete
-        if (!user.profile_complete) {
-          // Redirect to profile completion based on role
-          if (user.role === "passenger") {
-            navigate("/passenger/complete-profile");
-          } else if (user.role === "driver") {
-            navigate("/driver/complete-profile");
-          }
-        } else {
-          // Redirect to appropriate dashboard
-          if (user.role === "passenger") {
-            navigate("/passenger/dashboard");
-          } else if (user.role === "driver") {
-            navigate("/driver/dashboard");
-          }
+    // The response structure from your API
+    if (response) {
+      // Check if we have the user data in the response
+      // Your API returns: { access_token, token_type, user_id, active_role, roles }
+      const activeRole = response.active_role || role;
+      
+      // Find the role data from the roles array
+      const roleData = response.roles?.find(r => r.role === activeRole);
+      
+      // Determine if profile is complete
+      const profileComplete = roleData?.profile_complete || false;
+      
+      // Redirect based on profile completion
+      if (!profileComplete) {
+        // Redirect to profile completion based on role
+        if (activeRole === "passenger") {
+          navigate("/passenger/complete-profile");
+        } else if (activeRole === "driver") {
+          navigate("/driver/complete-profile");
+        }
+      } else {
+        // Redirect to appropriate dashboard
+        if (activeRole === "passenger") {
+          navigate("/passenger/search-ride");
+        } else if (activeRole === "driver") {
+          navigate("/driver/dashboard");
         }
       }
-    } catch (error) {
-      setLoading(false);
-      console.error("Login failed:", error);
-      // Error message is handled by the reducer
     }
-  };
+  } catch (error) {
+    setLoading(false);
+    console.error("Login failed:", error);
+  }
+};
 
   const handleSignup = async (e) => {
     e.preventDefault();

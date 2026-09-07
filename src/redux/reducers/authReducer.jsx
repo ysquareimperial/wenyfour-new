@@ -3,6 +3,7 @@ import { AUTH_ACTION_TYPES } from '../actions/authentication';
 
 const initialState = {
   user: null,
+  token: null,
   isAuthenticated: false,
   loading: false,
   errorMessage: null,
@@ -24,14 +25,61 @@ export const authReducer = (state = initialState, action) => {
         errorMessage: null,
       };
 
-    case AUTH_ACTION_TYPES.LOGIN_SUCCESS:
+    case AUTH_ACTION_TYPES.LOGIN_SUCCESS: {
+      // Handle the login response structure
+      const { data } = action.payload;
+      
+      // Extract user information from the response
+      let userData = null;
+      let token = null;
+      
+      if (data) {
+        // If the response has the structure with roles array
+        if (data.roles && data.active_role) {
+          const activeRole = data.active_role;
+          const roleData = data.roles.find(r => r.role === activeRole);
+          
+          userData = {
+            id: data.user_id,
+            email: data.email,
+            phone_number: data.phone_number,
+            role: activeRole,
+            profile_complete: roleData?.profile_complete || false,
+            nin_verified: roleData?.nin_verified || false,
+            // Add other user fields as they become available
+          };
+          token = data.access_token;
+        } 
+        // If the response is a flat user object
+        else if (data.id || data.user_id) {
+          userData = {
+            ...data,
+            id: data.id || data.user_id,
+            role: data.role || data.active_role || 'passenger',
+            profile_complete: data.profile_complete || false
+          };
+          token = data.access_token || data.token;
+        }
+      }
+      
       return {
         ...state,
         loading: false,
         isAuthenticated: true,
-        user: action.payload.user,
+        user: userData,
+        token: token || state.token,
         errorMessage: null,
         successMessage: null,
+      };
+    }
+
+    case AUTH_ACTION_TYPES.UPDATE_USER:
+      return {
+        ...state,
+        user: {
+          ...state.user,
+          ...action.payload
+        }
       };
 
     case AUTH_ACTION_TYPES.SIGNUP_SUCCESS:
@@ -58,7 +106,7 @@ export const authReducer = (state = initialState, action) => {
       return {
         ...state,
         loading: false,
-        successMessage: action.payload, // Now it's a string
+        successMessage: action.payload,
         errorMessage: null,
       };
 
@@ -71,13 +119,16 @@ export const authReducer = (state = initialState, action) => {
       return {
         ...state,
         loading: false,
-        errorMessage: action.payload, // Now it's a string
+        errorMessage: typeof action.payload === 'string' 
+          ? action.payload 
+          : action.payload?.detail || 'An error occurred',
       };
 
     case AUTH_ACTION_TYPES.LOGOUT:
       return {
         ...state,
         user: null,
+        token: null,
         isAuthenticated: false,
         errorMessage: null,
         successMessage: null,
@@ -99,4 +150,4 @@ export const authReducer = (state = initialState, action) => {
     default:
       return state;
   }
-};
+};  

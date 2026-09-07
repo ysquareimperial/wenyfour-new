@@ -1,6 +1,7 @@
 // src/App.jsx
+
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import SignUpp from './Components/SignUpp';
 import ResetPassword from './Components/ResetPassword';
@@ -17,15 +18,16 @@ function App() {
   const user = useSelector((state) => state.auth.user);
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
   const loading = useSelector((state) => state.auth.loading);
+  const location = useLocation();
 
   // Protected Route wrapper with profile check
   const ProtectedRoute = ({ children, roles = [] }) => {
     if (loading) {
-      return <div>Loading...</div>; // Or your loading component
+      return <div>Loading...</div>;
     }
 
-    if (!isAuthenticated) {
-      return <Navigate to="/login" />;
+    if (!isAuthenticated || !user) {
+      return <Navigate to="/login" state={{ from: location }} />;
     }
 
     if (roles.length > 0 && !roles.includes(user?.role)) {
@@ -33,16 +35,43 @@ function App() {
     }
 
     // Check if profile needs completion
+    // For passengers, they need to complete profile before accessing other pages
+    const profilePath = user?.role === 'passenger' 
+      ? '/passenger/complete-profile' 
+      : '/driver/complete-profile';
+    
+    const currentPath = location.pathname;
+    
+    // Don't redirect if already on the profile completion page
+    if (currentPath === profilePath) {
+      return children;
+    }
+
+    // Check if profile is complete - if not, redirect to profile completion
     if (user && !user.profile_complete) {
-      const profilePath = user.role === 'passenger' 
-        ? '/passenger/complete-profile' 
-        : '/driver/complete-profile';
-      
-      // Don't redirect if already on the profile completion page
-      const currentPath = window.location.pathname;
-      if (currentPath !== profilePath) {
-        return <Navigate to={profilePath} />;
-      }
+      return <Navigate to={profilePath} replace />;
+    }
+
+    return children;
+  };
+
+  // Route guard for passenger - redirect to search-ride instead of dashboard
+  const PassengerRoute = ({ children }) => {
+    if (loading) {
+      return <div>Loading...</div>;
+    }
+
+    if (!isAuthenticated || !user) {
+      return <Navigate to="/login" />;
+    }
+
+    if (user?.role !== 'passenger') {
+      return <Navigate to="/" />;
+    }
+
+    // Check if profile is complete
+    if (!user.profile_complete) {
+      return <Navigate to="/passenger/complete-profile" replace />;
     }
 
     return children;
@@ -70,11 +99,11 @@ function App() {
       <Route
         path="/passenger/search-ride"
         element={
-          <ProtectedRoute roles={['passenger']}>
+          <PassengerRoute>
             <ProfileGuard>
               <SearchRide />
             </ProfileGuard>
-          </ProtectedRoute>
+          </PassengerRoute>
         }
       />
       <Route
@@ -112,11 +141,19 @@ function App() {
       <Route
         path="*"
         element={
-          isAuthenticated ? (
+          isAuthenticated && user ? (
             user?.role === 'passenger' ? (
-              <Navigate to="/passenger/dashboard" />
+              user.profile_complete ? (
+                <Navigate to="/passenger/search-ride" />
+              ) : (
+                <Navigate to="/passenger/complete-profile" />
+              )
             ) : user?.role === 'driver' ? (
-              <Navigate to="/driver/dashboard" />
+              user.profile_complete ? (
+                <Navigate to="/driver/dashboard" />
+              ) : (
+                <Navigate to="/driver/complete-profile" />
+              )
             ) : (
               <Navigate to="/login" />
             )

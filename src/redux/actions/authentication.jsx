@@ -33,6 +33,25 @@ const isEmail = (identifier) => {
   return identifier.includes('@');
 };
 
+// Helper function to extract error message
+const extractErrorMessage = (error) => {
+  if (!error.response?.data) return 'An error occurred. Please try again.';
+  
+  const data = error.response.data;
+  
+  if (typeof data === 'string') return data;
+  if (data.detail) {
+    if (Array.isArray(data.detail)) {
+      return data.detail.map(err => err.msg).join(', ');
+    }
+    return data.detail;
+  }
+  if (data.message) return data.message;
+  if (data.error) return data.error;
+  
+  return 'An error occurred. Please try again.';
+};
+
 // Action Creators
 export const login = (credentials) => async (dispatch) => {
   dispatch({ type: AUTH_ACTION_TYPES.LOGIN_REQUEST });
@@ -54,17 +73,36 @@ export const login = (credentials) => async (dispatch) => {
     
     const { access_token, user_id, active_role, roles } = response.data;
     
+    // Find the active role data
     const activeRoleData = roles.find(r => r.role === active_role);
     const profileComplete = activeRoleData?.profile_complete || false;
+    const ninVerified = activeRoleData?.nin_verified || false;
     
+    // Build user object with all necessary fields
     const user = {
       id: user_id,
       role: active_role,
       profile_complete: profileComplete,
+      nin_verified: ninVerified,
       roles: roles,
       active_role: active_role,
+      // These will be populated when profile is completed
+      full_name: '',
+      email: '',
+      phone_number: '',
+      gender: '',
+      address: '',
+      date_of_birth: '',
+      next_of_kin_name: '',
+      next_of_kin_relationship: '',
+      emergency_contact: '',
+      blood_group: '',
+      health_conditions: '',
+      nin: '',
+      photo_url: '',
     };
     
+    // Store token and user data
     if (access_token) {
       localStorage.setItem('access_token', access_token);
       localStorage.setItem('user', JSON.stringify(user));
@@ -72,21 +110,13 @@ export const login = (credentials) => async (dispatch) => {
     
     dispatch({
       type: AUTH_ACTION_TYPES.LOGIN_SUCCESS,
-      payload: { user },
+      payload: { user, token: access_token },
     });
+    
     return { user, access_token };
   } catch (error) {
     console.error('Login error:', error.response?.data);
-    
-    // Extract error message properly
-    let errorMessage = 'Login failed. Please check your credentials.';
-    if (error.response?.data?.detail) {
-      if (Array.isArray(error.response.data.detail)) {
-        errorMessage = error.response.data.detail.map(err => err.msg).join(', ');
-      } else if (typeof error.response.data.detail === 'string') {
-        errorMessage = error.response.data.detail;
-      }
-    }
+    const errorMessage = extractErrorMessage(error);
     
     dispatch({
       type: AUTH_ACTION_TYPES.LOGIN_FAILURE,
@@ -112,14 +142,20 @@ export const signup = (userData) => async (dispatch) => {
 
     const response = await api.post('/users', requestBody);
     
+    // Store the identifier for OTP verification
+    localStorage.setItem('verification_identifier', userData.identifier);
+    
     dispatch({
       type: AUTH_ACTION_TYPES.SIGNUP_SUCCESS,
-      payload: { message: 'Verification code sent', user: response.data },
+      payload: { 
+        message: 'Verification code sent successfully',
+        identifier: userData.identifier 
+      },
     });
     return response.data;
   } catch (error) {
     console.error('Signup error:', error.response?.data);
-    const errorMessage = error.response?.data?.detail || 'Signup failed';
+    const errorMessage = extractErrorMessage(error);
     dispatch({
       type: AUTH_ACTION_TYPES.SIGNUP_FAILURE,
       payload: errorMessage,
@@ -136,6 +172,9 @@ export const verifyOtp = (data) => async (dispatch) => {
       otp: data.otp,
     });
     
+    // Store that verification is complete
+    localStorage.setItem('verification_complete', 'true');
+    
     dispatch({
       type: AUTH_ACTION_TYPES.VERIFY_EMAIL_SUCCESS,
       payload: { 
@@ -146,7 +185,7 @@ export const verifyOtp = (data) => async (dispatch) => {
     return response.data;
   } catch (error) {
     console.error('OTP verification error:', error.response?.data);
-    const errorMessage = error.response?.data?.detail || 'Verification failed. Please check your code.';
+    const errorMessage = extractErrorMessage(error);
     dispatch({
       type: AUTH_ACTION_TYPES.VERIFY_EMAIL_FAILURE,
       payload: errorMessage,
@@ -166,7 +205,7 @@ export const verifyEmail = (token) => async (dispatch) => {
     return response.data;
   } catch (error) {
     console.error('Verify email error:', error.response?.data);
-    const errorMessage = error.response?.data?.detail || 'Verification failed';
+    const errorMessage = extractErrorMessage(error);
     dispatch({
       type: AUTH_ACTION_TYPES.VERIFY_EMAIL_FAILURE,
       payload: errorMessage,
@@ -202,16 +241,7 @@ export const forgotPassword = (data) => async (dispatch) => {
     return response.data;
   } catch (error) {
     console.error('Forgot password error:', error);
-    let errorMessage = 'Failed to send reset link';
-    if (error.response?.data) {
-      if (typeof error.response.data === 'string') {
-        errorMessage = error.response.data;
-      } else if (error.response.data.detail) {
-        errorMessage = error.response.data.detail;
-      } else if (error.response.data.message) {
-        errorMessage = error.response.data.message;
-      }
-    }
+    const errorMessage = extractErrorMessage(error);
     
     dispatch({
       type: AUTH_ACTION_TYPES.FORGOT_PASSWORD_FAILURE,
@@ -243,7 +273,7 @@ export const resetPassword = (data) => async (dispatch) => {
     return response.data;
   } catch (error) {
     console.error('Reset password error:', error.response?.data);
-    const errorMessage = error.response?.data?.detail || error.response?.data?.message || 'Failed to reset password';
+    const errorMessage = extractErrorMessage(error);
     dispatch({
       type: AUTH_ACTION_TYPES.RESET_PASSWORD_FAILURE,
       payload: errorMessage,
@@ -279,7 +309,7 @@ export const resendVerification = (data) => async (dispatch) => {
     return response.data;
   } catch (error) {
     console.error('Resend verification error:', error.response?.data);
-    const errorMessage = error.response?.data?.detail || error.response?.data?.message || 'Failed to resend verification';
+    const errorMessage = extractErrorMessage(error);
     dispatch({
       type: AUTH_ACTION_TYPES.RESEND_VERIFICATION_FAILURE,
       payload: errorMessage,
@@ -289,16 +319,44 @@ export const resendVerification = (data) => async (dispatch) => {
 };
 
 export const logout = () => (dispatch) => {
+  // Clear all auth-related localStorage items
   localStorage.removeItem('access_token');
   localStorage.removeItem('user');
+  localStorage.removeItem('verification_identifier');
+  localStorage.removeItem('verification_complete');
+  
   dispatch({ type: AUTH_ACTION_TYPES.LOGOUT });
 };
 
+// Action to update user profile in Redux store
 export const updateUserProfile = (userData) => ({
   type: AUTH_ACTION_TYPES.UPDATE_USER_PROFILE,
   payload: userData,
 });
 
+// Action to set profile as complete
+export const setProfileComplete = () => (dispatch, getState) => {
+  const state = getState();
+  const currentUser = state.auth.user;
+  
+  if (currentUser) {
+    const updatedUser = {
+      ...currentUser,
+      profile_complete: true,
+    };
+    
+    // Update localStorage
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+    
+    // Update Redux store
+    dispatch({
+      type: AUTH_ACTION_TYPES.UPDATE_USER_PROFILE,
+      payload: updatedUser,
+    });
+  }
+};
+
+// Error handling actions
 export const loginFailure = (error) => ({
   type: AUTH_ACTION_TYPES.LOGIN_FAILURE,
   payload: error,
