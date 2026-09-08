@@ -1,9 +1,10 @@
 // src/pages/CompletePassengerProfile.jsx
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Modal, ModalBody } from "reactstrap";
 import api from "../services/apis";
 import { useAuth } from "../context/AuthContext";
+import AvatarCropper from "../Components/AvatarCropper";
 import { IconAlert, IconPerson, IconPhone } from "../icons";
 import "./CompleteProfile.css";
 
@@ -27,6 +28,15 @@ const CompletePassengerProfile = () => {
     health_conditions: user?.health_conditions || "",
     nin: user?.nin || "",
   });
+
+  // ---- Profile photo state ----
+  // photoFile: the cropped square Blob, ready to upload (null until the user
+  // finishes cropping). photoPreview: what's shown on screen — either the
+  // cropped blob's object URL, or the user's existing photo_url.
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(user?.photo_url || null);
+  const [cropSource, setCropSource] = useState(null); // object URL of the raw picked file
+  const fileInputRef = useRef(null);
 
   const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
@@ -56,18 +66,58 @@ const CompletePassengerProfile = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handlePhotoPick = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCropSource(URL.createObjectURL(file));
+    e.target.value = ""; // lets them re-pick the same file later if they cancel
+  };
+
+  const handleCropCancel = () => {
+    if (cropSource) URL.revokeObjectURL(cropSource);
+    setCropSource(null);
+  };
+
+  const handleCropSave = (blob) => {
+    if (photoPreview?.startsWith("blob:")) URL.revokeObjectURL(photoPreview);
+    if (cropSource) URL.revokeObjectURL(cropSource);
+    setCropSource(null);
+    setPhotoFile(blob);
+    setPhotoPreview(URL.createObjectURL(blob));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
 
-    try {
-      const { data } = await api.put("/profile/me", formData);
+    // The API only marks the profile complete once a photo is present too,
+    // so require one here rather than letting people submit without it.
+    if (!photoFile && !user?.photo_url) {
+      setError("Please add a profile photo to finish your profile.");
+      return;
+    }
 
-      // API response: { ..., profile_complete: true, nin_verification_status: "unverified" }
+    setLoading(true);
+    try {
+      // Step 1: save the text fields. The photo endpoint refuses uploads
+      // until this information is already saved.
+      const { data } = await api.put("/profile/me", formData);
+      let latestProfile = data;
+
+      // Step 2: upload the photo, if the user picked a new one.
+      if (photoFile) {
+        const uploadForm = new FormData();
+        uploadForm.append("file", photoFile, "avatar.jpg");
+        // Don't set a Content-Type header manually — the browser needs to
+        // add its own multipart boundary, which it only does automatically
+        // when it detects a FormData body itself.
+        const { data: photoData } = await api.post("/profile/me/photo", uploadForm);
+        latestProfile = photoData;
+      }
+
       updateProfile({
-        ...data,
-        nin_verified: data.nin_verification_status === "verified",
+        ...latestProfile,
+        nin_verified: latestProfile.nin_verification_status === "verified",
       });
 
       setShowSuccessModal(true);
@@ -102,6 +152,38 @@ const CompletePassengerProfile = () => {
         )}
 
         <form onSubmit={handleSubmit} className="auth_form">
+          <div className="form_section">
+            <h3>Profile Photo *</h3>
+            <div className="avatar_uploader">
+              <div className="avatar_preview">
+                {photoPreview ? (
+                  <img src={photoPreview} alt="Profile" />
+                ) : (
+                  <span className="avatar_placeholder">
+                    <IconPerson />
+                  </span>
+                )}
+              </div>
+              <div>
+                <button
+                  type="button"
+                  className="link_btn"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {photoPreview ? "Change photo" : "Add photo"}
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoPick}
+                  style={{ display: "none" }}
+                />
+                <p className="field_hint">JPG or PNG. You'll be able to crop it to a square first.</p>
+              </div>
+            </div>
+          </div>
+
           <div className="form_section">
             <h3>Personal Information</h3>
 
@@ -292,6 +374,10 @@ const CompletePassengerProfile = () => {
           </button>
         </form>
       </div>
+
+      {cropSource && (
+        <AvatarCropper imageSrc={cropSource} onCancel={handleCropCancel} onSave={handleCropSave} />
+      )}
 
       <Modal isOpen={showSuccessModal} centered className="success_modal" size="md" backdrop="static">
         <ModalBody className="success_modal_body">
