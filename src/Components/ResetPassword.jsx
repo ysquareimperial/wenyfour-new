@@ -1,8 +1,7 @@
 // src/Components/ResetPassword.jsx
 import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { resetPassword, clearAuthError, clearAuthMessage } from '../redux/actions/authentication';
+import { useAuth } from '../context/AuthContext';
 import { IconLock, IconAlert, IconEye, IconEyeOff } from '../icons';
 import './ResetPassword.css';
 
@@ -10,26 +9,25 @@ const ResetPassword = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const token = searchParams.get('token');
-  
+
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordError, setPasswordError] = useState('');
   const [resetSuccess, setResetSuccess] = useState(false);
-  
-  const dispatch = useDispatch();
-  const { loading, errorMessage, successMessage } = useSelector((state) => state.auth);
+  const [loading, setLoading] = useState(false);
+
+  const { resetPassword, errorMessage, clearError } = useAuth();
 
   useEffect(() => {
     if (!token) {
       navigate('/login');
     }
     return () => {
-      dispatch(clearAuthError());
-      dispatch(clearAuthMessage());
+      clearError();
     };
-  }, [dispatch, navigate, token]);
+  }, [navigate, token, clearError]);
 
   const validatePassword = (password) => {
     if (password.length < 6) {
@@ -39,11 +37,10 @@ const ResetPassword = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault(); // Make sure this is present
-    
-    // Reset errors
+    e.preventDefault();
+
     setPasswordError('');
-    
+
     const error = validatePassword(newPassword);
     if (error) {
       setPasswordError(error);
@@ -55,16 +52,18 @@ const ResetPassword = () => {
       return;
     }
 
+    setLoading(true);
     try {
-      const result = await dispatch(resetPassword({ token, newPassword }));
-      console.log('Reset password result:', result);
+      await resetPassword({ token, newPassword });
       setResetSuccess(true);
       setTimeout(() => {
         navigate('/login');
       }, 3000);
     } catch (error) {
       console.error('Reset password error:', error);
-      // Error is already handled by reducer
+      // Error is already surfaced via errorMessage from context
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -104,7 +103,7 @@ const ResetPassword = () => {
 
         {resetSuccess && (
           <div className="auth_alert success">
-            <span>✅ {getMessage(successMessage) || 'Password reset successful!'}</span>
+            <span>✅ Password reset successful!</span>
           </div>
         )}
 

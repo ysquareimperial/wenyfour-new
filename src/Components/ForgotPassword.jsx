@@ -1,8 +1,7 @@
 // src/Components/ForgotPassword.jsx
 import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { forgotPassword, clearAuthError, clearAuthMessage } from '../redux/actions/authentication';
+import { useAuth } from '../context/AuthContext';
 import { IconMail, IconPhone, IconAlert } from '../icons';
 import './ForgotPassword.css';
 
@@ -10,25 +9,27 @@ const ForgotPassword = () => {
   const navigate = useNavigate();
   const [identifier, setIdentifier] = useState('');
   const [submitted, setSubmitted] = useState(false);
-  const dispatch = useDispatch();
-  const { loading, errorMessage, successMessage } = useSelector((state) => state.auth);
+  const [loading, setLoading] = useState(false);
+  const { forgotPassword, errorMessage, clearError } = useAuth();
 
   useEffect(() => {
     return () => {
-      dispatch(clearAuthError());
-      dispatch(clearAuthMessage());
+      clearError();
     };
-  }, [dispatch]);
+  }, [clearError]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!identifier) return;
 
+    setLoading(true);
     try {
-      await dispatch(forgotPassword({ identifier }));
+      await forgotPassword(identifier);
       setSubmitted(true);
     } catch (error) {
-      // Error handled by reducer
+      // Error is already surfaced via errorMessage from context
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -44,7 +45,6 @@ const ForgotPassword = () => {
   };
 
   const showError = errorMessage && !submitted;
-  const showSuccess = successMessage && submitted;
 
   return (
     <div className="forgot_password_container">
@@ -93,7 +93,6 @@ const ForgotPassword = () => {
               onClick={() => {
                 setSubmitted(false);
                 setIdentifier('');
-                dispatch(clearAuthMessage());
               }}
             >
               Try another email/phone

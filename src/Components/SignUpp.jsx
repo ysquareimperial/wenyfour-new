@@ -1,18 +1,10 @@
 // src/Components/SignUpp.jsx
 import React, { useEffect, useRef, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { Modal, ModalBody, ModalHeader } from "reactstrap";
 import { useNavigate } from "react-router-dom";
+import { Modal, ModalBody } from "reactstrap";
 
-import {
-  login,
-  loginFailure,
-  signup,
-  verifyOtp,
-  resendVerification,
-  clearAuthError,
-  clearAuthMessage,
-} from "../redux/actions/authentication";
+import { useAuth } from "../context/AuthContext";
+import { getHomePath } from "../utils/authRedirect";
 import {
   IconMail,
   IconPhone,
@@ -168,13 +160,13 @@ function OtpInput({ value, onChange, inputRefs }) {
 
 export default function SignUpp() {
   const navigate = useNavigate();
-  const loggedInUser = useSelector((state) => state?.auth?.user);
+  const { isAuthenticated, user, login, signup, verifyOtp, resendVerification, errorMessage, clearError } =
+    useAuth();
+
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [tab, setTab] = useState(true);
   const [role, setRole] = useState("passenger");
-  const dispatch = useDispatch();
-  const [otpVerified, setOtpVerified] = useState(false);
 
   const [loginIdentifier, setLoginIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -187,84 +179,62 @@ export default function SignUpp() {
   const [otp, setOtp] = useState("");
   const [otpError, setOtpError] = useState(null);
   const [verifying, setVerifying] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
   const [resendSeconds, setResendSeconds] = useState(0);
 
   const [authSuccess, setAuthSuccess] = useState(false);
   const [authMessage, setAuthMessage] = useState("");
 
-  const errorMessage = useSelector((state) => state.auth.errorMessage);
   const otpInputsRef = useRef([]);
 
   const handleTogglePassword = () => setShowPassword((s) => !s);
 
+  // Already logged in? Bounce straight to where they belong.
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      navigate(getHomePath(user), { replace: true });
+    }
+  }, [isAuthenticated, user, navigate]);
+
   useEffect(() => {
     if (!modalOpen || resendSeconds <= 0) return;
-    const t = setTimeout(() => setResendSeconds((s) => s - 1), 500);
+    const t = setTimeout(() => setResendSeconds((s) => s - 1), 1000);
     return () => clearTimeout(t);
   }, [modalOpen, resendSeconds]);
 
   useEffect(() => {
     if (modalOpen && verificationType === "phone") {
       setTimeout(() => {
-        if (otpInputsRef.current && otpInputsRef.current[0]) {
-          otpInputsRef.current[0].focus();
-        }
+        otpInputsRef.current?.[0]?.focus();
       }, 100);
     }
   }, [modalOpen, verificationType]);
 
-  // In SignUpp.jsx - Update the handleLogin function
-  // In SignUpp.jsx, update the handleLogin function
-  // src/Components/SignUpp.jsx - Update handleLogin function
+  useEffect(() => clearError, [clearError]);
 
-const handleLogin = async (e) => {
-  e.preventDefault();
-  setLoading(true);
-  setAuthSuccess(false);
-  try {
-    const response = await dispatch(
-      login({ identifier: loginIdentifier, password, role }),
-    );
-    setLoading(false);
-    setAuthSuccess(true);
-    setAuthMessage(`✅ Successfully logged in as ${role}!`);
-    setLoginIdentifier("");
-    setPassword("");
+  useEffect(() => {
+    if (!authSuccess) return;
+    const timer = setTimeout(() => {
+      setAuthSuccess(false);
+      setAuthMessage("");
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [authSuccess]);
 
-    // The response structure from your API
-    if (response) {
-      // Check if we have the user data in the response
-      // Your API returns: { access_token, token_type, user_id, active_role, roles }
-      const activeRole = response.active_role || role;
-      
-      // Find the role data from the roles array
-      const roleData = response.roles?.find(r => r.role === activeRole);
-      
-      // Determine if profile is complete
-      const profileComplete = roleData?.profile_complete || false;
-      
-      // Redirect based on profile completion
-      if (!profileComplete) {
-        // Redirect to profile completion based on role
-        if (activeRole === "passenger") {
-          navigate("/passenger/complete-profile");
-        } else if (activeRole === "driver") {
-          navigate("/driver/complete-profile");
-        }
-      } else {
-        // Redirect to appropriate dashboard
-        if (activeRole === "passenger") {
-          navigate("/passenger/search-ride");
-        } else if (activeRole === "driver") {
-          navigate("/driver/dashboard");
-        }
-      }
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setAuthSuccess(false);
+    try {
+      const loggedInUser = await login({ identifier: loginIdentifier, password });
+      setLoading(false);
+      setLoginIdentifier("");
+      setPassword("");
+      navigate(getHomePath(loggedInUser), { replace: true });
+    } catch (error) {
+      setLoading(false);
     }
-  } catch (error) {
-    setLoading(false);
-    console.error("Login failed:", error);
-  }
-};
+  };
 
   const handleSignup = async (e) => {
     e.preventDefault();
@@ -272,13 +242,7 @@ const handleLogin = async (e) => {
     setLoading(true);
     setAuthSuccess(false);
     try {
-      await dispatch(
-        signup({
-          identifier: signupIdentifier,
-          password: signupPassword,
-          role,
-        }),
-      );
+      await signup({ identifier: signupIdentifier, password: signupPassword, role });
       setLoading(false);
       setVerificationType(type);
       setOtp("");
@@ -287,7 +251,6 @@ const handleLogin = async (e) => {
       setModalOpen(true);
     } catch (error) {
       setLoading(false);
-      console.error("Signup failed:", error);
     }
   };
 
@@ -297,12 +260,9 @@ const handleLogin = async (e) => {
     setVerifying(true);
     setOtpError(null);
     try {
-      await dispatch(verifyOtp({ identifier: signupIdentifier, otp }));
+      await verifyOtp({ identifier: signupIdentifier, otp });
       setVerifying(false);
-      // Set verification success state
       setOtpVerified(true);
-      // Keep modal open to show success message
-      setOtpError(null);
     } catch (error) {
       setVerifying(false);
       setOtpError("That code didn't work. Please try again.");
@@ -312,7 +272,7 @@ const handleLogin = async (e) => {
   const handleResend = async () => {
     if (resendSeconds > 0) return;
     try {
-      await dispatch(resendVerification({ identifier: signupIdentifier }));
+      await resendVerification(signupIdentifier);
       setResendSeconds(RESEND_SECONDS);
     } catch (error) {
       console.error("Resend failed:", error);
@@ -324,33 +284,12 @@ const handleLogin = async (e) => {
     setOtpVerified(false);
     setOtp("");
     setAuthSuccess(true);
-    setAuthMessage(`✅ Phone number verified successfully! Please log in.`);
-    // Switch to login tab
+    setAuthMessage("✅ Phone number verified successfully! Please log in.");
     setTab(true);
-    // Pre-fill the login identifier with the phone number
     setLoginIdentifier(signupIdentifier);
-    // Clear signup fields
     setSignupIdentifier("");
     setSignupPassword("");
   };
-
-  useEffect(() => {
-    return () => {
-      dispatch(loginFailure(null));
-      dispatch(clearAuthError());
-      dispatch(clearAuthMessage());
-    };
-  }, [dispatch]);
-
-  useEffect(() => {
-    if (authSuccess) {
-      const timer = setTimeout(() => {
-        setAuthSuccess(false);
-        setAuthMessage("");
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [authSuccess]);
 
   const handleForgotPassword = () => {
     navigate("/forgot-password");
@@ -403,18 +342,12 @@ const handleLogin = async (e) => {
               />
             </div>
 
-            <div
-              className="role_switch"
-              role="tablist"
-              aria-label="Choose account type"
-            >
+            <div className="role_switch" role="tablist" aria-label="Choose account type">
               <button
                 type="button"
                 role="tab"
                 aria-selected={role === "passenger"}
-                className={
-                  role === "passenger" ? "role_pill active" : "role_pill"
-                }
+                className={role === "passenger" ? "role_pill active" : "role_pill"}
                 onClick={() => setRole("passenger")}
               >
                 <IconPerson /> Passenger
@@ -450,22 +383,14 @@ const handleLogin = async (e) => {
             {errorMessage && (
               <div className="auth_alert">
                 <IconAlert />
-                <span>
-                  {typeof errorMessage === "string"
-                    ? errorMessage
-                    : "Login failed. Please try again."}
-                </span>
+                <span>{errorMessage}</span>
               </div>
             )}
 
             {authSuccess && (
               <div
                 className="auth_alert"
-                style={{
-                  background: "#e6f4ea",
-                  borderColor: "#b7e1cd",
-                  color: "#1e7e34",
-                }}
+                style={{ background: "#e6f4ea", borderColor: "#b7e1cd", color: "#1e7e34" }}
               >
                 <span>{authMessage}</span>
               </div>
@@ -511,9 +436,7 @@ const handleLogin = async (e) => {
                       type="button"
                       className="input_trailing_btn"
                       onClick={handleTogglePassword}
-                      aria-label={
-                        showPassword ? "Hide password" : "Show password"
-                      }
+                      aria-label={showPassword ? "Hide password" : "Show password"}
                     >
                       {showPassword ? <IconEyeOff /> : <IconEye />}
                     </button>
@@ -522,20 +445,12 @@ const handleLogin = async (e) => {
 
                 <div className="auth_row_between">
                   <span />
-                  <button
-                    type="button"
-                    className="link_btn"
-                    onClick={handleForgotPassword}
-                  >
+                  <button type="button" className="link_btn" onClick={handleForgotPassword}>
                     Forgot password?
                   </button>
                 </div>
 
-                <button
-                  className="auth_submit"
-                  type="submit"
-                  disabled={loading}
-                >
+                <button className="auth_submit" type="submit" disabled={loading}>
                   {loading ? (
                     <span className="spinner" />
                   ) : role === "driver" ? (
@@ -586,9 +501,7 @@ const handleLogin = async (e) => {
                       type="button"
                       className="input_trailing_btn"
                       onClick={handleTogglePassword}
-                      aria-label={
-                        showPassword ? "Hide password" : "Show password"
-                      }
+                      aria-label={showPassword ? "Hide password" : "Show password"}
                     >
                       {showPassword ? <IconEyeOff /> : <IconEye />}
                     </button>
@@ -597,29 +510,17 @@ const handleLogin = async (e) => {
 
                 <p className="auth_fineprint">
                   By creating an account, you agree to our{" "}
-                  <a
-                    target="_blank"
-                    rel="noreferrer"
-                    href="https://www.wenyfour.com/terms-and-conditions"
-                  >
+                  <a target="_blank" rel="noreferrer" href="https://www.wenyfour.com/terms-and-conditions">
                     Terms
                   </a>
                   ,{" "}
-                  <a
-                    target="_blank"
-                    rel="noreferrer"
-                    href="https://www.wenyfour.com/privacy-policy"
-                  >
+                  <a target="_blank" rel="noreferrer" href="https://www.wenyfour.com/privacy-policy">
                     Privacy Policy
                   </a>{" "}
                   and SMS notifications. Unsubscribe anytime.
                 </p>
 
-                <button
-                  className="auth_submit"
-                  type="submit"
-                  disabled={loading}
-                >
+                <button className="auth_submit" type="submit" disabled={loading}>
                   {loading ? (
                     <span className="spinner" />
                   ) : role === "driver" ? (
@@ -633,6 +534,7 @@ const handleLogin = async (e) => {
           </div>
         </main>
       </div>
+
       <Modal
         isOpen={modalOpen}
         centered
@@ -646,7 +548,6 @@ const handleLogin = async (e) => {
         backdrop="static"
       >
         <ModalBody className="verify_modal_body">
-          {/* Close button - only show if not verified */}
           {!otpVerified && (
             <button
               className="modal_close_btn"
@@ -667,41 +568,26 @@ const handleLogin = async (e) => {
               </div>
               <h5 className="auth_heading verify_title">Check your email</h5>
               <p className="verify_copy">
-                We've sent a verification link to{" "}
-                <strong>{signupIdentifier}</strong>. Click the link to activate
-                your account.
+                We've sent a verification link to <strong>{signupIdentifier}</strong>. Click the link to
+                activate your account.
               </p>
-              <button
-                className="link_btn"
-                disabled={resendSeconds > 0}
-                onClick={handleResend}
-              >
-                {resendSeconds > 0
-                  ? `Resend link in ${resendSeconds}s`
-                  : "Resend link"}
+              <button className="link_btn" disabled={resendSeconds > 0} onClick={handleResend}>
+                {resendSeconds > 0 ? `Resend link in ${resendSeconds}s` : "Resend link"}
               </button>
             </>
           ) : (
             <>
               {!otpVerified ? (
-                // OTP verification form
                 <form onSubmit={handleVerifyOtp} className="otp_form">
                   <div className="verify_icon_circle">
                     <IconMessage />
                   </div>
-                  <h5 className="auth_heading verify_title">
-                    Enter verification code
-                  </h5>
+                  <h5 className="auth_heading verify_title">Enter verification code</h5>
                   <p className="verify_copy">
-                    We've sent a 6-digit code to{" "}
-                    <strong>{signupIdentifier}</strong>.
+                    We've sent a 6-digit code to <strong>{signupIdentifier}</strong>.
                   </p>
 
-                  <OtpInput
-                    value={otp}
-                    onChange={setOtp}
-                    inputRefs={otpInputsRef}
-                  />
+                  <OtpInput value={otp} onChange={setOtp} inputRefs={otpInputsRef} />
 
                   {otpError && (
                     <div className="auth_alert modal_alert">
@@ -724,42 +610,22 @@ const handleLogin = async (e) => {
                     disabled={resendSeconds > 0}
                     onClick={handleResend}
                   >
-                    {resendSeconds > 0
-                      ? `Resend code in ${resendSeconds}s`
-                      : "Resend code"}
+                    {resendSeconds > 0 ? `Resend code in ${resendSeconds}s` : "Resend code"}
                   </button>
                 </form>
               ) : (
-                // Success message with login button
                 <div className="verification_success">
                   <div className="verify_icon_circle success">
-                    <svg
-                      width="40"
-                      height="40"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <path
-                        d="M20 6L9 17L4 12"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M20 6L9 17L4 12" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </div>
-                  <h5 className="auth_heading verify_title">
-                    Phone Number Verified!
-                  </h5>
+                  <h5 className="auth_heading verify_title">Phone Number Verified!</h5>
                   <p className="verify_copy">
-                    Your phone number <strong>{signupIdentifier}</strong> has
-                    been successfully verified. You can now log in to your
-                    account.
+                    Your phone number <strong>{signupIdentifier}</strong> has been successfully verified. You
+                    can now log in to your account.
                   </p>
-                  <button
-                    className="auth_submit verify_submit"
-                    onClick={handleVerificationSuccess}
-                  >
+                  <button className="auth_submit verify_submit" onClick={handleVerificationSuccess}>
                     Login Now
                   </button>
                 </div>

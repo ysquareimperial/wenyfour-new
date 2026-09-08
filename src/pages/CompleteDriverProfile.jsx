@@ -1,49 +1,46 @@
 // src/pages/CompleteDriverProfile.jsx
-import React, { useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { updateDriverProfile } from '../redux/actions/profile';
-import { Modal, ModalBody } from 'reactstrap';
-import { IconAlert, IconPerson, IconPhone, IconWheel } from '../icons';
-import './CompleteProfile.css';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Modal, ModalBody } from "reactstrap";
+import api from "../services/apis";
+import { useAuth } from "../context/AuthContext";
+import { IconAlert, IconPerson, IconPhone, IconWheel } from "../icons";
+import "./CompleteProfile.css";
 
 const CompleteDriverProfile = () => {
-  const dispatch = useDispatch();
   const navigate = useNavigate();
-  const user = useSelector((state) => state.auth.user);
+  const { user, updateProfile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  
+
   const [formData, setFormData] = useState({
-    // Passenger profile fields
-    full_name: user?.full_name || '',
-    address: user?.address || '',
-    date_of_birth: user?.date_of_birth || '',
-    next_of_kin_name: user?.next_of_kin_name || '',
-    next_of_kin_relationship: user?.next_of_kin_relationship || '',
-    emergency_contact: user?.emergency_contact || '',
-    blood_group: user?.blood_group || '',
-    health_conditions: user?.health_conditions || '',
-    nin: user?.nin || '',
-    // Driver specific fields
-    license_number: '',
-    license_expiry_date: '',
-    license_photo: null
+    full_name: user?.full_name || "",
+    address: user?.address || "",
+    date_of_birth: user?.date_of_birth || "",
+    next_of_kin_name: user?.next_of_kin_name || "",
+    next_of_kin_relationship: user?.next_of_kin_relationship || "",
+    emergency_contact: user?.emergency_contact || "",
+    blood_group: user?.blood_group || "",
+    health_conditions: user?.health_conditions || "",
+    nin: user?.nin || "",
+    license_number: "",
+    license_expiry_date: "",
+    license_photo: null,
   });
 
-  const bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
-  const relationships = ['Spouse', 'Parent', 'Sibling', 'Child', 'Friend', 'Other'];
+  const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+  const relationships = ["Spouse", "Parent", "Sibling", "Child", "Friend", "Other"];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setFormData(prev => ({ ...prev, license_photo: file }));
+      setFormData((prev) => ({ ...prev, license_photo: file }));
     }
   };
 
@@ -53,9 +50,14 @@ const CompleteDriverProfile = () => {
     setError(null);
 
     try {
-      // Update both passenger and driver profiles
-      await dispatch(updateDriverProfile({
-        // Passenger profile data
+      // Driver-specific fields
+      const { data: driverData } = await api.put("/profile/driver", {
+        license_number: formData.license_number,
+        license_expiry_date: formData.license_expiry_date,
+      });
+
+      // Shared personal-profile fields — this is what flips profile_complete to true
+      const { data: userData } = await api.put("/profile/me", {
         full_name: formData.full_name,
         address: formData.address,
         date_of_birth: formData.date_of_birth,
@@ -65,20 +67,20 @@ const CompleteDriverProfile = () => {
         blood_group: formData.blood_group,
         health_conditions: formData.health_conditions,
         nin: formData.nin,
-        // Driver profile data
-        licenseNumber: formData.license_number,
-        licenseExpiryDate: formData.license_expiry_date
-      }));
+      });
 
-      // If there's a license photo, upload it separately
-      if (formData.license_photo) {
-        // You'll need to implement this API call
-        // await uploadLicensePhoto(formData.license_photo);
-      }
+      // If there's a license photo, upload it separately once that endpoint exists
+      // if (formData.license_photo) { await uploadLicensePhoto(formData.license_photo); }
+
+      updateProfile({
+        ...driverData,
+        ...userData,
+        nin_verified: userData.nin_verification_status === "verified",
+      });
 
       setShowSuccessModal(true);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to update profile. Please try again.');
+      setError(err.response?.data?.detail || "Failed to update profile. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -102,11 +104,13 @@ const CompleteDriverProfile = () => {
         <form onSubmit={handleSubmit} className="auth_form">
           <div className="form_section">
             <h3>Personal Information</h3>
-            
+
             <div className="field_group">
               <label className="field_label">Full Name *</label>
               <div className="input_wrap">
-                <span className="input_icon"><IconPerson /></span>
+                <span className="input_icon">
+                  <IconPerson />
+                </span>
                 <input
                   className="input_field with_icon"
                   type="text"
@@ -149,15 +153,12 @@ const CompleteDriverProfile = () => {
             <div className="field_group">
               <label className="field_label">Blood Group</label>
               <div className="input_wrap">
-                <select
-                  className="input_field"
-                  name="blood_group"
-                  value={formData.blood_group}
-                  onChange={handleChange}
-                >
+                <select className="input_field" name="blood_group" value={formData.blood_group} onChange={handleChange}>
                   <option value="">Select blood group</option>
-                  {bloodGroups.map(group => (
-                    <option key={group} value={group}>{group}</option>
+                  {bloodGroups.map((group) => (
+                    <option key={group} value={group}>
+                      {group}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -180,11 +181,13 @@ const CompleteDriverProfile = () => {
 
           <div className="form_section">
             <h3>Driver License Information</h3>
-            
+
             <div className="field_group">
               <label className="field_label">License Number *</label>
               <div className="input_wrap">
-                <span className="input_icon"><IconWheel /></span>
+                <span className="input_icon">
+                  <IconWheel />
+                </span>
                 <input
                   className="input_field with_icon"
                   type="text"
@@ -214,13 +217,7 @@ const CompleteDriverProfile = () => {
             <div className="field_group">
               <label className="field_label">License Photo</label>
               <div className="input_wrap">
-                <input
-                  className="input_field"
-                  type="file"
-                  name="license_photo"
-                  onChange={handleFileChange}
-                  accept="image/*"
-                />
+                <input className="input_field" type="file" name="license_photo" onChange={handleFileChange} accept="image/*" />
               </div>
               <small className="field_hint">Upload a clear photo of your driver's license (optional for now)</small>
             </div>
@@ -228,7 +225,7 @@ const CompleteDriverProfile = () => {
 
           <div className="form_section">
             <h3>Emergency Contact</h3>
-            
+
             <div className="field_group">
               <label className="field_label">Next of Kin Name</label>
               <div className="input_wrap">
@@ -253,8 +250,10 @@ const CompleteDriverProfile = () => {
                   onChange={handleChange}
                 >
                   <option value="">Select relationship</option>
-                  {relationships.map(rel => (
-                    <option key={rel} value={rel}>{rel}</option>
+                  {relationships.map((rel) => (
+                    <option key={rel} value={rel}>
+                      {rel}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -263,7 +262,9 @@ const CompleteDriverProfile = () => {
             <div className="field_group">
               <label className="field_label">Emergency Contact Number</label>
               <div className="input_wrap">
-                <span className="input_icon"><IconPhone /></span>
+                <span className="input_icon">
+                  <IconPhone />
+                </span>
                 <input
                   className="input_field with_icon"
                   type="tel"
@@ -294,23 +295,13 @@ const CompleteDriverProfile = () => {
             </div>
           </div>
 
-          <button
-            className="auth_submit"
-            type="submit"
-            disabled={loading}
-          >
-            {loading ? <span className="spinner" /> : 'Complete Driver Profile'}
+          <button className="auth_submit" type="submit" disabled={loading}>
+            {loading ? <span className="spinner" /> : "Complete Driver Profile"}
           </button>
         </form>
       </div>
 
-      {/* Success Modal */}
-      <Modal
-        isOpen={showSuccessModal}
-        centered
-        className="success_modal"
-        backdrop="static"
-      >
+      <Modal isOpen={showSuccessModal} centered className="success_modal" backdrop="static">
         <ModalBody className="success_modal_body">
           <div className="success_icon">
             <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -319,15 +310,14 @@ const CompleteDriverProfile = () => {
           </div>
           <h3>Driver Profile Submitted! 🚗</h3>
           <p>
-            Thank you for completing your driver profile! Our team will review your information and verify your account within 24-48 hours.
+            Thank you for completing your driver profile! Our team will review your information and verify
+            your account within 24-48 hours.
           </p>
           <p className="verification_notice">
-            You'll receive a notification once your account is verified. You can start accepting rides immediately after verification.
+            You'll receive a notification once your account is verified. You can start accepting rides
+            immediately after verification.
           </p>
-          <button
-            className="auth_submit"
-            onClick={() => navigate('/driver/dashboard')}
-          >
+          <button className="auth_submit" onClick={() => navigate("/driver/dashboard")}>
             Go to Dashboard
           </button>
         </ModalBody>

@@ -1,23 +1,15 @@
 // src/pages/CompletePassengerProfile.jsx
 import React, { useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { updatePassengerProfile } from "../redux/actions/profile";
 import { Modal, ModalBody } from "reactstrap";
-import {
-  IconClose,
-  IconAlert,
-  IconPerson,
-  IconMail,
-  IconPhone,
-  IconLock,
-} from "../icons";
+import api from "../services/apis";
+import { useAuth } from "../context/AuthContext";
+import { IconAlert, IconPerson, IconPhone } from "../icons";
 import "./CompleteProfile.css";
 
 const CompletePassengerProfile = () => {
-  const dispatch = useDispatch();
   const navigate = useNavigate();
-  const user = useSelector((state) => state.auth.user);
+  const { user, updateProfile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -64,33 +56,32 @@ const CompletePassengerProfile = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // src/pages/CompletePassengerProfile.jsx - Update handleSubmit
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setLoading(true);
-  setError(null);
+    try {
+      const { data } = await api.put("/profile/me", formData);
 
-  try {
-    const response = await dispatch(updatePassengerProfile(formData));
-    setShowSuccessModal(true);
-    // Store the response if needed for user update
-    if (response) {
-      // The profile update was successful
-      console.log('Profile updated successfully');
+      // API response: { ..., profile_complete: true, nin_verification_status: "unverified" }
+      updateProfile({
+        ...data,
+        nin_verified: data.nin_verification_status === "verified",
+      });
+
+      setShowSuccessModal(true);
+    } catch (err) {
+      setError(err.response?.data?.detail || "Failed to update profile. Please try again.");
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    setError(err.response?.data?.detail || 'Failed to update profile. Please try again.');
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
-const handleSearchRide = () => {
-  setShowSuccessModal(false);
-  // Navigate to search ride
-  navigate('/passenger/search-ride');
-};
+  const handleContinue = () => {
+    setShowSuccessModal(false);
+    navigate("/passenger/search-ride");
+  };
 
   return (
     <div className="complete_profile_page">
@@ -98,8 +89,8 @@ const handleSearchRide = () => {
         <div className="profile_header">
           <h1>Complete Your Profile</h1>
           <p>
-            Help us get to know you better. This information helps us provide a
-            safer ride-sharing experience.
+            Help us get to know you better. This information helps us provide a safer ride-sharing
+            experience.
           </p>
         </div>
 
@@ -135,13 +126,7 @@ const handleSearchRide = () => {
             <div className="field_group">
               <label className="field_label">Gender *</label>
               <div className="input_wrap">
-                <select
-                  className="input_field"
-                  name="gender"
-                  value={formData.gender}
-                  onChange={handleChange}
-                  required
-                >
+                <select className="input_field" name="gender" value={formData.gender} onChange={handleChange} required>
                   <option value="">Select gender</option>
                   {genders.map((gender) => (
                     <option key={gender} value={gender}>
@@ -199,12 +184,7 @@ const handleSearchRide = () => {
             <div className="field_group">
               <label className="field_label">Blood Group</label>
               <div className="input_wrap">
-                <select
-                  className="input_field"
-                  name="blood_group"
-                  value={formData.blood_group}
-                  onChange={handleChange}
-                >
+                <select className="input_field" name="blood_group" value={formData.blood_group} onChange={handleChange}>
                   <option value="">Select blood group</option>
                   {bloodGroups.map((group) => (
                     <option key={group} value={group}>
@@ -290,9 +270,7 @@ const handleSearchRide = () => {
           <div className="form_section">
             <h3>Identification</h3>
             <div className="field_group">
-              <label className="field_label">
-                NIN (National Identification Number)
-              </label>
+              <label className="field_label">NIN (National Identification Number)</label>
               <div className="input_wrap">
                 <input
                   className="input_field"
@@ -304,8 +282,7 @@ const handleSearchRide = () => {
                 />
               </div>
               <small className="field_hint">
-                NIN cannot be changed after submission. We'll verify it for
-                security purposes.
+                NIN cannot be changed after submission. We'll verify it for security purposes.
               </small>
             </div>
           </div>
@@ -316,46 +293,19 @@ const handleSearchRide = () => {
         </form>
       </div>
 
-      {/* Success Modal */}
-      <Modal
-        isOpen={showSuccessModal}
-        centered
-        className="success_modal"
-        size="md"
-        backdrop="static"
-      >
+      <Modal isOpen={showSuccessModal} centered className="success_modal" size="md" backdrop="static">
         <ModalBody className="success_modal_body">
           <div className="success_icon">
-            <svg
-              width="60"
-              height="60"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path
-                d="M20 6L9 17L4 12"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
+            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M20 6L9 17L4 12" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
           <h3>Profile Submitted! 🎉</h3>
           <p>
-            Your profile has been successfully submitted. Our team will review
-            and verify your information. You'll be notified once your account is
-            approved.
+            Your profile has been successfully submitted. Our team will review and verify your
+            information. You'll be notified once your account is approved.
           </p>
-          {/* <div className="verification_notice">
-            <strong>📋 Next Steps:</strong>
-            <ul>
-              <li>We'll verify your NIN and provided information</li>
-              <li>You'll receive a notification upon approval</li>
-              <li>This process usually takes 1-2 business days</li>
-            </ul>
-          </div> */}
-          <button className="auth_submit" onClick={handleSearchRide}>
+          <button className="auth_submit" onClick={handleContinue}>
             Go to Dashboard
           </button>
         </ModalBody>

@@ -1,92 +1,102 @@
 // src/Components/VerifyEmail.jsx
-import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import { verifyEmail, clearAuthError, clearAuthMessage } from '../redux/actions/authentication';
-import { IconAlert, IconEnvelopeLarge } from '../icons';
-import './VerifyEmail.css';
+import React, { useEffect, useState } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { IconAlert } from "../icons";
+import "./VerifyEmail.css";
 
 const VerifyEmail = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const dispatch = useDispatch();
-  const token = searchParams.get('token');
-  
-  const [verificationStatus, setVerificationStatus] = useState('verifying'); // 'verifying' | 'success' | 'error'
-  const [errorMessage, setErrorMessage] = useState('');
-  
-  const { loading } = useSelector((state) => state.auth);
+  const { verifyEmail } = useAuth();
+  const token = searchParams.get("token");
+
+  const [verificationStatus, setVerificationStatus] = useState("verifying"); // 'verifying' | 'success' | 'error'
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     if (!token) {
-      setVerificationStatus('error');
-      setErrorMessage('No verification token found. Please check your email link.');
+      setVerificationStatus("error");
+      setErrorMessage(
+        "No verification token found. Please check your email link.",
+      );
       return;
     }
 
+    let cancelled = false;
+
     const verify = async () => {
       try {
-        await dispatch(verifyEmail(token));
-        setVerificationStatus('success');
-        
+        await verifyEmail(token);
+        if (cancelled) return;
+        setVerificationStatus("success");
+
         // Redirect to login after 3 seconds
         setTimeout(() => {
-          navigate('/login');
+          navigate("/login");
         }, 3000);
       } catch (error) {
-        setVerificationStatus('error');
-        setErrorMessage(error.response?.data?.detail || 'Verification failed. Please try again.');
+        if (cancelled) return;
+        setVerificationStatus("error");
+        setErrorMessage(
+          error.response?.data?.detail ||
+            "Verification failed. Please try again.",
+        );
       }
     };
 
     verify();
 
     return () => {
-      dispatch(clearAuthError());
-      dispatch(clearAuthMessage());
+      cancelled = true;
     };
-  }, [dispatch, navigate, token]);
+  }, [navigate, token, verifyEmail]);
 
   const handleRetry = () => {
     window.location.reload();
   };
 
   const handleGoToLogin = () => {
-    navigate('/login');
+    navigate("/login");
   };
 
   return (
     <div className="verify_email_container">
       <div className="verify_email_card">
-        {verificationStatus === 'verifying' && (
+        {verificationStatus === "verifying" && (
           <>
             <div className="verify_icon_circle loading">
               <div className="spinner_large"></div>
             </div>
             <h2 className="verify_title">Verifying your email</h2>
-            <p className="verify_subtitle">Please wait while we confirm your email address...</p>
+            <p className="verify_subtitle">
+              Please wait while we confirm your email address...
+            </p>
           </>
         )}
 
-        {verificationStatus === 'success' && (
+        {verificationStatus === "success" && (
           <>
             <div className="verify_icon_circle success">
               <span className="success_icon">✓</span>
             </div>
             <h2 className="verify_title success_title">Email Verified!</h2>
             <p className="verify_subtitle">
-              Your email has been successfully verified. You can now log in to your account.
+              Your email has been successfully verified. You can now log in to
+              your account.
             </p>
             <div className="verify_actions">
               <button className="auth_submit" onClick={handleGoToLogin}>
                 Go to Login
               </button>
             </div>
-            <p className="redirect_note">Redirecting to login in a few seconds...</p>
+            <p className="redirect_note">
+              Redirecting to login in a few seconds...
+            </p>
           </>
         )}
 
-        {verificationStatus === 'error' && (
+        {verificationStatus === "error" && (
           <>
             <div className="verify_icon_circle error">
               <IconAlert />
@@ -97,12 +107,16 @@ const VerifyEmail = () => {
               <button className="auth_submit" onClick={handleRetry}>
                 Try Again
               </button>
-              <button className="auth_submit secondary" onClick={handleGoToLogin}>
+              <button
+                className="auth_submit secondary"
+                onClick={handleGoToLogin}
+              >
                 Go to Login
               </button>
             </div>
             <p className="help_text">
-              Need help? <a href="mailto:support@wenyfour.com">Contact Support</a>
+              Need help?{" "}
+              <a href="mailto:support@wenyfour.com">Contact Support</a>
             </p>
           </>
         )}
