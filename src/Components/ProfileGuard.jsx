@@ -13,11 +13,8 @@ export const ProfileGuard = ({ children }) => {
       // Check if profile is complete
       if (!user.profile_complete) {
         // Redirect to appropriate profile completion page
-        if (user.role === 'passenger') {
-          navigate('/passenger/complete-profile');
-        } else if (user.role === 'driver') {
-          navigate('/driver/complete-profile');
-        }
+          navigate('/complete-profile');
+     
       }
     }
   }, [user, loading, navigate]);

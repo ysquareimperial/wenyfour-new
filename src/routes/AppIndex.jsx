@@ -22,7 +22,7 @@ export default function AppIndex() {
 
         {user && (
           <div className="app_topbar_right">
-            <span className="app_role_badge">{user.role}</span>
+            {user.is_driver && <span className="app_role_badge">Driver</span>}
             <button type="button" className="link_btn" onClick={logout}>
               Log out
             </button>

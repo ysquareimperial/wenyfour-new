@@ -32,16 +32,29 @@ export function AuthProvider({ children }) {
 
   const clearError = useCallback(() => setErrorMessage(null), []);
 
-  const persist = (nextUser, nextToken) => {
+  // Either argument can be omitted to leave that piece untouched — e.g.
+  // persistToken(token) alone, or persistUser(user) alone.
+  const persistToken = (nextToken) => {
+    localStorage.setItem("access_token", nextToken);
+    setToken(nextToken);
+  };
+
+  const persistUser = (nextUser) => {
     if (nextUser) localStorage.setItem("user", JSON.stringify(nextUser));
-    if (nextToken) localStorage.setItem("access_token", nextToken);
+    else localStorage.removeItem("user");
     setUser(nextUser);
-    if (nextToken) setToken(nextToken);
   };
 
   // ---- Login -------------------------------------------------------------
-  // Response shape:
-  // { access_token, token_type, user_id, active_role, roles: [{role, profile_complete, nin_verified}] }
+  // Roles are gone, so /auth/login no longer carries per-role
+  // profile_complete data — it just proves who you are. Once we have the
+  // token, we fetch the actual profile (same flat shape PUT /profile/me
+  // returns: profile_complete, is_passenger, is_driver, can_book_rides,
+  // can_offer_rides, driver_profile, etc.) from GET /profile/me.
+  //
+  // NOTE: this assumes GET /profile/me exists alongside the PUT you shared.
+  // If login already returns the full profile itself, this extra request is
+  // unnecessary — say so and I'll simplify it back to a single call.
   const login = useCallback(async ({ identifier, password }) => {
     setErrorMessage(null);
     try {
@@ -57,17 +70,17 @@ export function AuthProvider({ children }) {
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
       });
 
-      const activeRoleData = data.roles?.find((r) => r.role === data.active_role) || {};
+      // Store the token first so the request interceptor can attach it to
+      // the profile fetch below.
+      persistToken(data.access_token);
 
+      const { data: profile } = await api.get("/profile/me");
       const nextUser = {
-        id: data.user_id,
-        role: data.active_role,
-        roles: data.roles,
-        profile_complete: !!activeRoleData.profile_complete,
-        nin_verified: !!activeRoleData.nin_verified,
+        ...profile,
+        nin_verified: profile.nin_verification_status === "verified",
       };
 
-      persist(nextUser, data.access_token);
+      persistUser(nextUser);
       return nextUser;
     } catch (error) {
       setErrorMessage(extractErrorMessage(error));
@@ -76,6 +89,9 @@ export function AuthProvider({ children }) {
   }, []);
 
   // ---- Signup (sends OTP / verification email) ---------------------------
+  // NOTE: this still sends `role` to POST /users, left over from before
+  // roles were discarded. If that endpoint no longer takes/needs a role,
+  // tell me and I'll drop it (and the role picker in SignUpp) too.
   const signup = useCallback(async ({ identifier, password, role }) => {
     setErrorMessage(null);
     try {

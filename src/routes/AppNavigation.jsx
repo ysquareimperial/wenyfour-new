@@ -11,17 +11,14 @@ import ResetPassword from "../Components/ResetPassword";
 import VerifyEmail from "../Components/VerifyEmail";
 
 import SearchRide from "../pages/SearchRide";
-import PassengerDashboard from "../pages/PassengerDashboard";
-import DriverDashboard from "../pages/DriverDashboard";
-import CompletePassengerProfile from "../pages/CompletePassengerProfile";
-import CompleteDriverProfile from "../pages/CompleteDriverProfile";
+import CompleteProfile from "../pages/CompleteProfile";
 
 function AppNavigation() {
   return useRoutes([
     // Public auth pages — no layout shell
     { path: "/login", element: <SignUpp /> },
     { path: "/signup", element: <SignUpp /> },
-    { path: "/forgot-password", element: <ForgotPassword /> },
+    { path: "/forgot-password", element: <ForgotPassword /> },  
     { path: "/reset-password", element: <ResetPassword /> },
     { path: "/verify-email", element: <VerifyEmail /> },
 
@@ -30,42 +27,18 @@ function AppNavigation() {
       element: <AppIndex />,
       children: [
         {
-          path: "/passenger/complete-profile",
+          path: "/complete-profile",
           element: (
-            <ProtectedRoute roles={["passenger"]}>
-              <CompletePassengerProfile />
+            <ProtectedRoute>
+              <CompleteProfile />
             </ProtectedRoute>
           ),
         },
         {
-          path: "/passenger/search-ride",
+          path: "/search-ride",
           element: (
-            <ProtectedRoute roles={["passenger"]}>
+            <ProtectedRoute>
               <SearchRide />
-            </ProtectedRoute>
-          ),
-        },
-        {
-          path: "/passenger/dashboard",
-          element: (
-            <ProtectedRoute roles={["passenger"]}>
-              <PassengerDashboard />
-            </ProtectedRoute>
-          ),
-        },
-        {
-          path: "/driver/complete-profile",
-          element: (
-            <ProtectedRoute roles={["driver"]}>
-              <CompleteDriverProfile />
-            </ProtectedRoute>
-          ),
-        },
-        {
-          path: "/driver/dashboard",
-          element: (
-            <ProtectedRoute roles={["driver"]}>
-              <DriverDashboard />
             </ProtectedRoute>
           ),
         },
