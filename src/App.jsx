@@ -6,7 +6,7 @@ import AppNavigation from "./routes/AppNavigation";
 // NOTE: this assumes <BrowserRouter> already wraps <App /> in your
 // main.jsx/index.jsx (it must, since AppNavigation uses useRoutes).
 function App() {
-  return (
+  return (  
     <AuthProvider>
       <AppNavigation />
     </AuthProvider>

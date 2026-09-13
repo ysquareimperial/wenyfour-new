@@ -1,0 +1,437 @@
+/* src/pages/AddCar.css */
+
+.add_car_page {
+  --ac-accent: #0d6efd;
+  --ac-accent-soft: #eff4ff;
+  --ac-ink: #0b1220;
+  --ac-body: #475467;
+  --ac-muted: #98a2b3;
+  --ac-border: #e4e7ec;
+  --ac-surface: #ffffff;
+  --ac-surface-2: #f9fafb;
+  --ac-danger: #b42318;
+  --ac-danger-bg: #fef3f2;
+  --ac-danger-border: #fecdca;
+  --ac-success: #067647;
+
+  min-height: 100vh;
+  background: var(--ac-surface);
+  padding: 40px 20px 80px;
+  font-family: "Poppins", sans-serif;
+  color: var(--ac-ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+.add_car_page *,
+.add_car_page *::before,
+.add_car_page *::after {
+  box-sizing: border-box;
+}
+
+.ac_inner {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+/* ---------- Header ---------- */
+
+.ac_header {
+  margin-bottom: 28px;
+}
+
+.ac_eyebrow {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ac-accent);
+  margin: 0 0 10px;
+}
+
+.ac_title {
+  font-family: "Plus Jakarta Sans", "Poppins", sans-serif;
+  font-size: 32px;
+  line-height: 1.15;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  margin: 0 0 8px;
+}
+
+.ac_subtitle {
+  font-size: 15px;
+  color: var(--ac-body);
+  margin: 0;
+  max-width: 520px;
+  line-height: 1.5;
+}
+
+/* ---------- Alert ---------- */
+
+.ac_alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: var(--ac-danger-bg);
+  border: 1px solid var(--ac-danger-border);
+  color: var(--ac-danger);
+  font-size: 13px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  line-height: 1.45;
+}
+
+.ac_alert svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ---------- Form ---------- */
+
+.ac_form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Sections are now flat: no border, no radius, no padding.
+   Hierarchy comes from the section title + spacing alone. */
+.ac_section {
+  background: transparent;
+  margin-bottom: 20px;
+}
+
+.ac_section_title {
+  font-family: "Plus Jakarta Sans", "Poppins", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ac-muted);
+  margin: 0 0 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ac_row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.ac_row:last-child {
+  margin-bottom: 0;
+}
+
+.ac_field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ac_label {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ac-ink);
+}
+
+.ac_input_wrap {
+  position: relative;
+}
+
+.ac_input_icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ac-muted);
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+}
+
+.ac_input {
+  width: 100%;
+  padding: 12px 14px;
+  padding-left: 42px;
+  border: 1.5px solid var(--ac-border);
+  border-radius: 10px;
+  font-size: 14.5px;
+  color: var(--ac-ink);
+  background-color: var(--ac-surface-2);
+  transition: all 150ms ease;
+  font-family: inherit;
+}
+
+.ac_input.no_icon {
+  padding-left: 14px;
+}
+
+.ac_input:focus {
+  outline: none;
+  border-color: var(--ac-accent);
+  box-shadow: 0 0 0 4px var(--ac-accent-soft);
+  background-color: var(--ac-surface);
+}
+
+.ac_hint {
+  font-size: 11.5px;
+  color: var(--ac-muted);
+  margin-top: 2px;
+}
+
+/* ---------- Checkboxes ---------- */
+
+.ac_check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1.5px solid var(--ac-border);
+  border-radius: 10px;
+  background: var(--ac-surface-2);
+  cursor: pointer;
+  transition: all 150ms ease;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--ac-ink);
+  user-select: none;
+}
+
+.ac_check:hover {
+  background: var(--ac-surface);
+  border-color: #d0d5dd;
+}
+
+.ac_check:has(input:checked) {
+  border-color: var(--ac-accent);
+  background: var(--ac-accent-soft);
+}
+
+.ac_check input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--ac-accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.ac_check_grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.ac_section > .ac_check:first-of-type {
+  margin-bottom: 0;
+}
+
+/* ---------- Footer / submit ---------- */
+
+.ac_form_footer {
+  margin-top: 8px;
+}
+
+.ac_submit {
+  width: 100%;
+  background: var(--ac-accent);
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 15px;
+  min-height: 52px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 150ms ease;
+}
+
+.ac_submit:hover:not(:disabled) {
+  filter: brightness(0.94);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(13, 110, 253, 0.28);
+}
+
+.ac_submit:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
+.ac_submit:disabled {
+  opacity: 0.75;
+  cursor: progress;
+}
+
+.ac_spinner {
+  width: 16px;
+  height: 16px;
+  border: 2.2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: ac-spin 700ms linear infinite;
+}
+
+@keyframes ac-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------- Success state (flat) ---------- */
+
+.ac_state {
+  background: transparent;
+  text-align: center;
+  max-width: 480px;
+  margin: 24px auto 0;
+}
+
+.ac_state_icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+  background: var(--ac-accent-soft);
+  color: var(--ac-accent);
+}
+
+.ac_state_icon.success {
+  background: #ecfdf3;
+  color: var(--ac-success);
+}
+
+.ac_state_title {
+  font-family: "Plus Jakarta Sans", "Poppins", sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: var(--ac-ink);
+}
+
+.ac_state_copy {
+  font-size: 14.5px;
+  color: var(--ac-body);
+  line-height: 1.55;
+  margin: 0 0 24px;
+}
+
+/* Kept as a subtle inset panel so the summary values stay legible. */
+.ac_success_summary {
+  text-align: left;
+  border: 1px solid var(--ac-border);
+  border-radius: 12px;
+  padding: 6px 16px;
+  background: var(--ac-surface-2);
+  margin-bottom: 24px;
+}
+
+.ac_success_row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  font-size: 13.5px;
+  border-bottom: 1px solid var(--ac-border);
+}
+
+.ac_success_row:last-child {
+  border-bottom: none;
+}
+
+.ac_success_label {
+  color: var(--ac-muted);
+  font-weight: 500;
+}
+
+.ac_success_value {
+  color: var(--ac-ink);
+  font-weight: 600;
+}
+
+.ac_state_actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ac_btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 18px;
+  border-radius: 10px;
+  border: 1.5px solid var(--ac-border);
+  background: var(--ac-surface);
+  color: var(--ac-ink);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 150ms ease;
+  min-height: 46px;
+}
+
+.ac_btn.primary {
+  background: var(--ac-accent);
+  border-color: var(--ac-accent);
+  color: #ffffff;
+}
+
+.ac_btn.primary:hover {
+  filter: brightness(0.94);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(13, 110, 253, 0.25);
+}
+
+.ac_btn.ghost:hover {
+  background: var(--ac-surface-2);
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 640px) {
+  .add_car_page {
+    padding: 24px 16px 64px;
+  }
+
+  .ac_title {
+    font-size: 26px;
+  }
+
+  .ac_subtitle {
+    font-size: 14px;
+  }
+
+  .ac_row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .ac_check_grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ac_state_title {
+    font-size: 19px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ac_submit,
+  .ac_btn,
+  .ac_check,
+  .ac_input,
+  .ac_spinner {
+    transition: none !important;
+    animation: none !important;
+  }
+}

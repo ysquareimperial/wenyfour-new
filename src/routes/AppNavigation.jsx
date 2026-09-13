@@ -12,13 +12,15 @@ import VerifyEmail from "../Components/VerifyEmail";
 
 import SearchRide from "../pages/SearchRide";
 import CompleteProfile from "../pages/CompleteProfile";
+import AddCar from "../pages/AddCar";
+import PublishRide from "../pages/PublishRide";
 
 function AppNavigation() {
   return useRoutes([
     // Public auth pages — no layout shell
     { path: "/login", element: <SignUpp /> },
     { path: "/signup", element: <SignUpp /> },
-    { path: "/forgot-password", element: <ForgotPassword /> },  
+    { path: "/forgot-password", element: <ForgotPassword /> },
     { path: "/reset-password", element: <ResetPassword /> },
     { path: "/verify-email", element: <VerifyEmail /> },
 
@@ -39,6 +41,22 @@ function AppNavigation() {
           element: (
             <ProtectedRoute>
               <SearchRide />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: "/cars/new",
+          element: (
+            <ProtectedRoute>
+              <AddCar />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: "/rides/publish",
+          element: (  
+            <ProtectedRoute>
+              <PublishRide />
             </ProtectedRoute>
           ),
         },
