@@ -1,0 +1,328 @@
+/* src/components/DateTimeFields.css
+   Scoped to .dtf_root. Matches the app's input language:
+   1.5px #e4e7ec border, 10px radius, #f9fafb background,
+   #eff4ff focus halo.
+*/
+
+.dtf_root {
+  --dtf-accent: #0d6efd;
+  --dtf-accent-soft: #eff4ff;
+  --dtf-ink: #0b1220;
+  --dtf-body: #475467;
+  --dtf-muted: #98a2b3;
+  --dtf-border: #e4e7ec;
+  --dtf-surface: #ffffff;
+  --dtf-surface-2: #f9fafb;
+  --dtf-surface-3: #f2f4f7;
+
+  position: relative;
+  width: 100%;
+}
+
+.dtf_root *,
+.dtf_root *::before,
+.dtf_root *::after { box-sizing: border-box; }
+
+/* ---------- Trigger ---------- */
+
+.dtf_trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1.5px solid var(--dtf-border);
+  border-radius: 10px;
+  background: var(--dtf-surface-2);
+  color: var(--dtf-ink);
+  font-family: inherit;
+  font-size: 14.5px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: all 150ms ease;
+  min-height: 46px;
+}
+
+.dtf_trigger:hover:not(.disabled) {
+  border-color: #d0d5dd;
+}
+
+.dtf_trigger.open,
+.dtf_trigger:focus-visible {
+  outline: none;
+  border-color: var(--dtf-accent);
+  box-shadow: 0 0 0 4px var(--dtf-accent-soft);
+  background: var(--dtf-surface);
+}
+
+.dtf_trigger.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.dtf_icon {
+  color: var(--dtf-muted);
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.dtf_value {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dtf_value.placeholder { color: var(--dtf-muted); }
+
+/* ---------- Popover ---------- */
+
+.dtf_popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  z-index: 60;
+  background: var(--dtf-surface);
+  border: 1px solid var(--dtf-border);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px -14px rgba(16, 24, 40, 0.25);
+  min-width: 280px;
+  padding: 12px;
+  animation: dtf_pop 140ms ease;
+}
+
+.dtf_popover_left { left: 0; }
+.dtf_popover_right { right: 0; }
+
+@keyframes dtf_pop {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------- Calendar ---------- */
+
+.dtf_cal_head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.dtf_cal_title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--dtf-ink);
+  font-family: "Plus Jakarta Sans", "Poppins", sans-serif;
+}
+
+.dtf_nav_btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--dtf-body);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+
+.dtf_nav_btn:hover { background: var(--dtf-surface-3); color: var(--dtf-ink); }
+
+.dtf_nav_btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--dtf-accent-soft);
+}
+
+.dtf_weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 4px;
+}
+
+.dtf_weekday {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--dtf-muted);
+  padding: 4px 0;
+  text-transform: uppercase;
+}
+
+.dtf_grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.dtf_cell {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dtf-ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.dtf_cell.empty { visibility: hidden; }
+
+.dtf_cell:hover:not(.disabled):not(.selected) {
+  background: var(--dtf-surface-3);
+}
+
+.dtf_cell.today {
+  color: var(--dtf-accent);
+  font-weight: 700;
+}
+
+.dtf_cell.selected {
+  background: var(--dtf-accent);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.dtf_cell.disabled {
+  color: #cbd2dc;
+  cursor: not-allowed;
+}
+
+.dtf_cell:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--dtf-accent-soft);
+}
+
+.dtf_cal_foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--dtf-border);
+}
+
+.dtf_foot_btn {
+  border: none;
+  background: transparent;
+  color: var(--dtf-accent);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 8px;
+  transition: background 150ms ease;
+}
+
+.dtf_foot_btn:hover { background: var(--dtf-accent-soft); }
+.dtf_foot_btn.subtle { color: var(--dtf-body); }
+.dtf_foot_btn.subtle:hover { background: var(--dtf-surface-3); }
+
+.dtf_foot_btn:disabled {
+  color: var(--dtf-muted);
+  cursor: not-allowed;
+  background: transparent;
+}
+
+/* ---------- Time ---------- */
+
+.dtf_time_wrap {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.dtf_time_col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dtf_time_col_label {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--dtf-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding-left: 4px;
+}
+
+.dtf_time_scroll {
+  max-height: 200px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-right: 2px;
+}
+
+.dtf_time_scroll::-webkit-scrollbar { width: 6px; }
+.dtf_time_scroll::-webkit-scrollbar-thumb {
+  background: var(--dtf-border);
+  border-radius: 3px;
+}
+
+.dtf_time_cell {
+  border: none;
+  background: transparent;
+  color: var(--dtf-ink);
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 500;
+  text-align: center;
+  padding: 8px 6px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.dtf_time_cell:hover:not(.selected) { background: var(--dtf-surface-3); }
+
+.dtf_time_cell.selected {
+  background: var(--dtf-accent);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.dtf_time_cell:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--dtf-accent-soft);
+}
+
+.dtf_time_preview {
+  font-size: 12.5px;
+  color: var(--dtf-body);
+  font-weight: 500;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 400px) {
+  .dtf_popover { min-width: 260px; }
+  .dtf_time_scroll { max-height: 170px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dtf_popover,
+  .dtf_trigger,
+  .dtf_cell,
+  .dtf_time_cell,
+  .dtf_nav_btn,
+  .dtf_foot_btn {
+    transition: none !important;
+    animation: none !important;
+  }
+}

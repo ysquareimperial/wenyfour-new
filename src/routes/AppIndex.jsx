@@ -66,13 +66,14 @@ const Icon = {
  * ------------------------------------------------------------------ */
 
 const MAIN_NAV = [
-  { to: "/search-ride",      label: "Find a ride",      icon: <Icon.Search /> },
-  { to: "/complete-profile", label: "Complete profile", icon: <Icon.User />   },
+  { to: "/search-ride", label: "Find a ride", icon: <Icon.Search /> },
+  { to: "/my-rides",    label: "My rides",    icon: <Icon.Route />  },
+  { to: "/my-cars",     label: "My cars",     icon: <Icon.Car />    },
 ];
 
 const DRIVER_NAV = [
-  { to: "/cars/new",       label: "Add a car",       icon: <Icon.Car />   },
-  { to: "/rides/publish",  label: "Publish a ride",  icon: <Icon.Route /> },
+  { to: "/cars/new",      label: "Add a car",      icon: <Icon.Car />   },
+  { to: "/rides/publish", label: "Publish a ride", icon: <Icon.Route /> },
 ];
 
 /* ------------------------------------------------------------------ *

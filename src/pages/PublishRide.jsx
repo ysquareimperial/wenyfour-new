@@ -1,12 +1,16 @@
 // src/pages/PublishRide.jsx
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import './PublishRide.css';
+import { TimeField, DateField } from '../Components/DateTimeFields';
 
 const API_BASE = 'https://api.wenyfour.com.ng';
 
+// API requires coordinates; we send 0s from the UI (see note in the message).
+const ZERO_COORDS = { lat: 0, lng: 0 };
+
 /* ------------------------------------------------------------------ *
- *  Auth helper — same pattern as AddCar
+ *  Auth helper
  * ------------------------------------------------------------------ */
 function getAuthToken() {
   return (
@@ -29,15 +33,6 @@ function todayISO() {
   return `${y}-${m}-${day}`;
 }
 
-function formatDateFriendly(iso) {
-  if (!iso) return '';
-  const [y, m, d] = iso.split('-').map(Number);
-  if (!y || !m || !d) return iso;
-  return new Date(y, m - 1, d).toLocaleDateString('en-US', {
-    weekday: 'short', month: 'short', day: 'numeric',
-  });
-}
-
 function formatTimeFriendly(time) {
   if (!time) return '';
   const [hStr, mStr] = time.split(':');
@@ -49,10 +44,17 @@ function formatTimeFriendly(time) {
   return `${h12}:${String(m).padStart(2, '0')} ${period}`;
 }
 
-const EMPTY_STOPOVER = { location: '', lat: '', lng: '' };
+function carLabel(car) {
+  const parts = [car.make, car.model].filter(Boolean).join(' ');
+  const year = car.year ? ` · ${car.year}` : '';
+  const plate = car.plate_number ? ` · ${car.plate_number}` : '';
+  return `${parts}${year}${plate}`;
+}
+
+const EMPTY_STOPOVER = { location: '' };
 
 /* ------------------------------------------------------------------ *
- *  Icons
+ *  Icons (subset — same set as before, kept inline)
  * ------------------------------------------------------------------ */
 
 const Icon = {
@@ -69,24 +71,11 @@ const Icon = {
         strokeLinejoin="round" strokeLinecap="round" />
     </svg>
   ),
-  Clock: (p) => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" {...p}>
-      <circle cx="12" cy="12" r="8.5" stroke="currentColor" strokeWidth="1.7" />
-      <path d="M12 7.5V12l3 2" stroke="currentColor" strokeWidth="1.7"
-        strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  ),
-  Calendar: (p) => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" {...p}>
-      <rect x="3.5" y="5" width="17" height="15" rx="2.5" stroke="currentColor" strokeWidth="1.7" />
-      <path d="M3.5 9.5h17M8 3.5v3M16 3.5v3" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-    </svg>
-  ),
   User: (p) => (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" {...p}>
       <circle cx="12" cy="8.5" r="3.3" stroke="currentColor" strokeWidth="1.7" />
-      <path d="M5 20c.9-3.4 3.6-5.2 7-5.2s6.1 1.8 7 5.2" stroke="currentColor" strokeWidth="1.7"
-        strokeLinecap="round" />
+      <path d="M5 20c.9-3.4 3.6-5.2 7-5.2s6.1 1.8 7 5.2"
+        stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
     </svg>
   ),
   Car: (p) => (
@@ -130,6 +119,12 @@ const Icon = {
       <path d="M13 2 4.5 13.5H11l-1 8.5L18.5 10H12l1-8Z" />
     </svg>
   ),
+  Calendar: (p) => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" {...p}>
+      <rect x="3.5" y="5" width="17" height="15" rx="2.5" stroke="currentColor" strokeWidth="1.7" />
+      <path d="M3.5 9.5h17M8 3.5v3M16 3.5v3" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+    </svg>
+  ),
 };
 
 /* ------------------------------------------------------------------ *
@@ -140,12 +135,17 @@ const PublishRide = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // If the user arrived from AddCar, prefill the car id.
   const presetCarId = location.state?.carId ?? location.state?.car?.id ?? '';
 
+  // Cars list
+  const [cars, setCars] = useState(null);
+  const [carsStatus, setCarsStatus] = useState('idle'); // idle | loading | success | error
+  const [carsError, setCarsError] = useState('');
+
+  // Form state
   const [carId, setCarId] = useState(presetCarId ? String(presetCarId) : '');
-  const [pickup, setPickup] = useState({ location: '', lat: '', lng: '' });
-  const [dropoff, setDropoff] = useState({ location: '', lat: '', lng: '' });
+  const [pickupLocation, setPickupLocation] = useState('');
+  const [dropoffLocation, setDropoffLocation] = useState('');
   const [stopovers, setStopovers] = useState([]);
   const [dates, setDates] = useState([todayISO()]);
   const [pickupTime, setPickupTime] = useState('');
@@ -154,12 +154,68 @@ const PublishRide = () => {
   const [instantBooking, setInstantBooking] = useState(false);
   const [pricePerSeat, setPricePerSeat] = useState('');
 
-  const [status, setStatus] = useState('idle'); // idle | submitting | success | error
+  const [status, setStatus] = useState('idle');
   const [errorMsg, setErrorMsg] = useState('');
   const [eligibilityBlocked, setEligibilityBlocked] = useState(false);
   const [createdRide, setCreatedRide] = useState(null);
 
   const today = todayISO();
+
+  /* ---------------- fetch cars ---------------- */
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      const token = getAuthToken();
+      if (!token) {
+        setCarsStatus('error');
+        setCarsError('You need to be signed in to publish a ride.');
+        return;
+      }
+
+      setCarsStatus('loading');
+      setCarsError('');
+
+      try {
+        const res = await fetch(`${API_BASE}/cars/my-cars`, {
+          method: 'GET',
+          headers: {
+            accept: 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (!res.ok) {
+          if (res.status === 401 || res.status === 403) {
+            throw new Error('Your session has expired. Please sign in again.');
+          }
+          throw new Error(`Request failed with ${res.status}`);
+        }
+        const data = await res.json();
+        if (cancelled) return;
+        const list = Array.isArray(data) ? data : [];
+        setCars(list);
+        setCarsStatus('success');
+
+        // If the user arrived without a preset carId, and there's exactly
+        // one car, preselect it. Otherwise leave the select empty.
+        setCarId((current) => {
+          if (current) return current;
+          if (list.length === 1) return String(list[0].id);
+          return '';
+        });
+      } catch (err) {
+        if (cancelled) return;
+        // eslint-disable-next-line no-console
+        console.error('[publish ride] cars fetch failed:', err);
+        setCarsStatus('error');
+        setCarsError('We couldn\u2019t load your cars. Please refresh and try again.');
+      }
+    }
+
+    load();
+    return () => { cancelled = true; };
+  }, []);
 
   /* ---------------- stopovers ---------------- */
 
@@ -171,7 +227,6 @@ const PublishRide = () => {
   /* ---------------- dates ---------------- */
 
   const addDate = () => {
-    // Start the new picker on today (or the last date + 1 day if that's later).
     const last = dates[dates.length - 1];
     let seed = today;
     if (last) {
@@ -196,15 +251,9 @@ const PublishRide = () => {
   /* ---------------- submit ---------------- */
 
   const validate = () => {
-    if (!carId.trim()) return 'Please select or enter the car you want to use.';
-    if (!pickup.location.trim()) return 'Please enter the pickup location.';
-    if (pickup.lat === '' || pickup.lng === '') {
-      return 'Pickup latitude and longitude are required.';
-    }
-    if (!dropoff.location.trim()) return 'Please enter the drop-off location.';
-    if (dropoff.lat === '' || dropoff.lng === '') {
-      return 'Drop-off latitude and longitude are required.';
-    }
+    if (!carId.trim()) return 'Please select the car you want to use.';
+    if (!pickupLocation.trim()) return 'Please enter the pickup location.';
+    if (!dropoffLocation.trim()) return 'Please enter the drop-off location.';
     if (uniqueDates.length === 0) return 'Please add at least one departure date.';
     if (!pickupTime) return 'Please choose a pickup time.';
     if (!maxPassengers || Number(maxPassengers) < 1) {
@@ -214,11 +263,7 @@ const PublishRide = () => {
       return 'Please enter a price per seat.';
     }
     for (const [i, s] of stopovers.entries()) {
-      const hasAny = s.location || s.lat !== '' || s.lng !== '';
-      if (!hasAny) continue;
-      if (!s.location.trim() || s.lat === '' || s.lng === '') {
-        return `Stopover ${i + 1} needs a location, latitude, and longitude.`;
-      }
+      if (!s.location.trim()) return `Stopover ${i + 1} needs a location.`;
     }
     return null;
   };
@@ -241,24 +286,23 @@ const PublishRide = () => {
     setStatus('submitting');
 
     const cleanStopovers = stopovers
-      .filter((s) => s.location.trim() && s.lat !== '' && s.lng !== '')
+      .filter((s) => s.location.trim())
       .map((s) => ({
         location: s.location.trim(),
-        lat: Number(s.lat),
-        lng: Number(s.lng),
+        lat: ZERO_COORDS.lat,
+        lng: ZERO_COORDS.lng,
       }));
 
     const payload = {
       car_id: Number(carId),
-      pickup_location: pickup.location.trim(),
-      pickup_lat: Number(pickup.lat),
-      pickup_lng: Number(pickup.lng),
-      dropoff_location: dropoff.location.trim(),
-      dropoff_lat: Number(dropoff.lat),
-      dropoff_lng: Number(dropoff.lng),
+      pickup_location: pickupLocation.trim(),
+      pickup_lat: ZERO_COORDS.lat,
+      pickup_lng: ZERO_COORDS.lng,
+      dropoff_location: dropoffLocation.trim(),
+      dropoff_lat: ZERO_COORDS.lat,
+      dropoff_lng: ZERO_COORDS.lng,
       stopovers: cleanStopovers,
       dates: uniqueDates,
-      // API expects a time; HH:MM:SS is valid for FastAPI `time` fields.
       pickup_time: `${pickupTime}:00`,
       max_passengers: Number(maxPassengers),
       max_back_seat_passengers: Number(maxBackSeatPassengers),
@@ -356,7 +400,7 @@ const PublishRide = () => {
               <button
                 type="button"
                 className="pr_btn primary"
-                onClick={() => navigate('/rides/search')}
+                onClick={() => navigate('/search-ride')}
               >
                 See my ride in search
                 <Icon.Arrow />
@@ -381,6 +425,8 @@ const PublishRide = () => {
   /* ---------------- form ---------------- */
 
   const submitting = status === 'submitting';
+  const carsLoading = carsStatus === 'loading';
+  const noCars = carsStatus === 'success' && cars && cars.length === 0;
 
   return (
     <div className="publish_ride_page">
@@ -407,32 +453,64 @@ const PublishRide = () => {
           </div>
         )}
 
+        {/* No-cars guard */}
+        {noCars && (
+          <div className="pr_alert" role="alert">
+            <Icon.Alert />
+            <div>
+              <span>You need a car on your profile before you can publish a ride.</span>
+              <button
+                type="button"
+                className="pr_alert_link"
+                onClick={() => navigate('/cars/new')}
+              >
+                Add a car
+              </button>
+            </div>
+          </div>
+        )}
+
         <form className="pr_form" onSubmit={handleSubmit} noValidate>
           {/* ---- Car ---- */}
           <section className="pr_section">
             <h2 className="pr_section_title">Vehicle</h2>
 
             <div className="pr_field">
-              <label className="pr_label" htmlFor="pr_car_id">Car ID</label>
-              <div className="pr_input_wrap">
-                <span className="pr_input_icon" aria-hidden="true"><Icon.Car /></span>
-                <input
-                  id="pr_car_id"
-                  className="pr_input"
-                  type="number"
-                  inputMode="numeric"
-                  min="1"
-                  placeholder="e.g. 6"
-                  value={carId}
-                  onChange={(e) => setCarId(e.target.value)}
-                  required
-                />
-              </div>
-              <span className="pr_hint">
-                {presetCarId
-                  ? 'Pre-selected from the car you just added.'
-                  : 'Enter the ID of one of your saved cars.'}
-              </span>
+              <label className="pr_label" htmlFor="pr_car_select">Car</label>
+
+              {carsLoading ? (
+                <div className="pr_select_skeleton" aria-hidden="true" />
+              ) : (
+                <div className="pr_input_wrap">
+                  <span className="pr_input_icon" aria-hidden="true"><Icon.Car /></span>
+                  <select
+                    id="pr_car_select"
+                    className="pr_input pr_select"
+                    value={carId}
+                    onChange={(e) => setCarId(e.target.value)}
+                    required
+                    disabled={noCars}
+                  >
+                    <option value="" disabled>
+                      {noCars ? 'No cars available' : 'Select a car'}
+                    </option>
+                    {(cars || []).map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {carLabel(c)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {carsStatus === 'error' && (
+                <span className="pr_hint error">{carsError}</span>
+              )}
+              {!carsLoading && carsStatus === 'success' && cars.length > 0 && (
+                <span className="pr_hint">
+                  {cars.length} {cars.length === 1 ? 'car' : 'cars'} on your profile.
+                </span>
+              )}
             </div>
           </section>
 
@@ -450,39 +528,8 @@ const PublishRide = () => {
                   type="text"
                   autoComplete="off"
                   placeholder="e.g. Shoprite, Ikeja"
-                  value={pickup.location}
-                  onChange={(e) => setPickup((p) => ({ ...p, location: e.target.value }))}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="pr_row">
-              <div className="pr_field">
-                <label className="pr_label" htmlFor="pr_pickup_lat">Pickup latitude</label>
-                <input
-                  id="pr_pickup_lat"
-                  className="pr_input no_icon"
-                  type="number"
-                  step="any"
-                  inputMode="decimal"
-                  placeholder="e.g. 6.6018"
-                  value={pickup.lat}
-                  onChange={(e) => setPickup((p) => ({ ...p, lat: e.target.value }))}
-                  required
-                />
-              </div>
-              <div className="pr_field">
-                <label className="pr_label" htmlFor="pr_pickup_lng">Pickup longitude</label>
-                <input
-                  id="pr_pickup_lng"
-                  className="pr_input no_icon"
-                  type="number"
-                  step="any"
-                  inputMode="decimal"
-                  placeholder="e.g. 3.3515"
-                  value={pickup.lng}
-                  onChange={(e) => setPickup((p) => ({ ...p, lng: e.target.value }))}
+                  value={pickupLocation}
+                  onChange={(e) => setPickupLocation(e.target.value)}
                   required
                 />
               </div>
@@ -498,39 +545,8 @@ const PublishRide = () => {
                   type="text"
                   autoComplete="off"
                   placeholder="e.g. Challenge, Ibadan"
-                  value={dropoff.location}
-                  onChange={(e) => setDropoff((p) => ({ ...p, location: e.target.value }))}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="pr_row">
-              <div className="pr_field">
-                <label className="pr_label" htmlFor="pr_dropoff_lat">Drop-off latitude</label>
-                <input
-                  id="pr_dropoff_lat"
-                  className="pr_input no_icon"
-                  type="number"
-                  step="any"
-                  inputMode="decimal"
-                  placeholder="e.g. 7.3775"
-                  value={dropoff.lat}
-                  onChange={(e) => setDropoff((p) => ({ ...p, lat: e.target.value }))}
-                  required
-                />
-              </div>
-              <div className="pr_field">
-                <label className="pr_label" htmlFor="pr_dropoff_lng">Drop-off longitude</label>
-                <input
-                  id="pr_dropoff_lng"
-                  className="pr_input no_icon"
-                  type="number"
-                  step="any"
-                  inputMode="decimal"
-                  placeholder="e.g. 3.9470"
-                  value={dropoff.lng}
-                  onChange={(e) => setDropoff((p) => ({ ...p, lng: e.target.value }))}
+                  value={dropoffLocation}
+                  onChange={(e) => setDropoffLocation(e.target.value)}
                   required
                 />
               </div>
@@ -567,32 +583,6 @@ const PublishRide = () => {
                           onChange={(e) => updateStopover(i, 'location', e.target.value)}
                         />
                       </div>
-                      <div className="pr_row">
-                        <div className="pr_field">
-                          <label className="pr_label" htmlFor={`pr_stop_lat_${i}`}>Latitude</label>
-                          <input
-                            id={`pr_stop_lat_${i}`}
-                            className="pr_input no_icon"
-                            type="number"
-                            step="any"
-                            inputMode="decimal"
-                            value={s.lat}
-                            onChange={(e) => updateStopover(i, 'lat', e.target.value)}
-                          />
-                        </div>
-                        <div className="pr_field">
-                          <label className="pr_label" htmlFor={`pr_stop_lng_${i}`}>Longitude</label>
-                          <input
-                            id={`pr_stop_lng_${i}`}
-                            className="pr_input no_icon"
-                            type="number"
-                            step="any"
-                            inputMode="decimal"
-                            value={s.lng}
-                            onChange={(e) => updateStopover(i, 'lng', e.target.value)}
-                          />
-                        </div>
-                      </div>
                     </div>
                     <button
                       type="button"
@@ -614,17 +604,12 @@ const PublishRide = () => {
 
             <div className="pr_field">
               <label className="pr_label" htmlFor="pr_pickup_time">Pickup time</label>
-              <div className="pr_input_wrap">
-                <span className="pr_input_icon" aria-hidden="true"><Icon.Clock /></span>
-                <input
-                  id="pr_pickup_time"
-                  className="pr_input"
-                  type="time"
-                  value={pickupTime}
-                  onChange={(e) => setPickupTime(e.target.value)}
-                  required
-                />
-              </div>
+              <TimeField
+                id="pr_pickup_time"
+                value={pickupTime}
+                onChange={setPickupTime}
+                placeholder="Select a time"
+              />
               {pickupTime && (
                 <span className="pr_hint">Will be published as {formatTimeFriendly(pickupTime)}.</span>
               )}
@@ -642,12 +627,11 @@ const PublishRide = () => {
                 {dates.map((d, i) => (
                   <div className="pr_date_row" key={i}>
                     <span className="pr_input_icon inline" aria-hidden="true"><Icon.Calendar /></span>
-                    <input
-                      className="pr_input no_icon date"
-                      type="date"
-                      min={today}
+                    <DateField
                       value={d}
-                      onChange={(e) => updateDate(i, e.target.value)}
+                      onChange={(next) => updateDate(i, next)}
+                      min={today}
+                      placeholder="Pick a date"
                     />
                     {dates.length > 1 && (
                       <button
@@ -750,7 +734,7 @@ const PublishRide = () => {
             <button
               type="submit"
               className="pr_submit"
-              disabled={submitting}
+              disabled={submitting || noCars}
               aria-busy={submitting}
             >
               {submitting ? (

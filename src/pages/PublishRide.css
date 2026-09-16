@@ -294,22 +294,64 @@
   grid-template-columns: 20px 1fr auto;
   align-items: center;
   gap: 10px;
-  padding: 6px 10px 6px 12px;
-  border: 1.5px solid var(--pr-border);
+}
+
+.pr_date_row .dtf_root {
+  width: 100%;
+}
+
+/* ---------- Car select ---------- */
+
+.pr_select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23475467' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 38px;
+  cursor: pointer;
+}
+
+.pr_select:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.pr_select_skeleton {
+  height: 46px;
   border-radius: 10px;
-  background: var(--pr-surface-2);
+  background: linear-gradient(90deg, #eef0f3 0%, #f6f7f9 50%, #eef0f3 100%);
+  background-size: 200% 100%;
+  animation: pr-shimmer 1400ms infinite linear;
 }
 
-.pr_date_row .pr_input.date {
+@keyframes pr-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+/* ---------- Inline alert link ---------- */
+
+.pr_alert_link {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 0;
+  background: none;
   border: none;
-  background: transparent;
-  padding: 8px 0;
+  color: var(--pr-danger);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
-.pr_date_row .pr_input.date:focus {
-  box-shadow: none;
-}
+.pr_alert_link:hover { color: #7a1a12; }
 
+/* ---------- Hint error variant ---------- */
+
+.pr_hint.error { color: var(--pr-danger); }
 /* ---------- Remove ---------- */
 
 .pr_remove_btn {
