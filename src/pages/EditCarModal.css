@@ -1,0 +1,175 @@
+/* src/Components/EditCarModal.css */
+
+.edit_car_modal .modal-content {
+  border-radius: 20px !important;
+  border: none !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+}
+
+.edit_car_body {
+  padding: 32px 28px 28px;
+  position: relative;
+  font-family: "Poppins", sans-serif;
+}
+
+.edit_car_close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: #f9fafb;
+  color: #475467;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 150ms ease;
+}
+.edit_car_close:hover { background: #f2f4f7; color: #0b1220; }
+
+.edit_car_title {
+  font-family: "Plus Jakarta Sans", "Poppins", sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: #0b1220;
+  margin: 0 0 6px;
+}
+
+.edit_car_subtitle {
+  font-size: 13.5px;
+  color: #475467;
+  margin: 0 0 20px;
+}
+
+.edit_car_alert {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  background: #fef3f2;
+  border: 1px solid #fecdca;
+  color: #b42318;
+  font-size: 13px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.edit_car_form { display: flex; flex-direction: column; gap: 14px; }
+
+.edit_car_row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.edit_car_field { display: flex; flex-direction: column; gap: 6px; }
+
+.edit_car_field label {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #0b1220;
+}
+
+.edit_car_field input {
+  width: 100%;
+  padding: 11px 13px;
+  border: 1.5px solid #e4e7ec;
+  border-radius: 10px;
+  font-size: 14.5px;
+  color: #0b1220;
+  background: #f9fafb;
+  font-family: inherit;
+  transition: all 150ms ease;
+}
+
+.edit_car_field input:focus {
+  outline: none;
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 4px #eff4ff;
+  background: #fff;
+}
+
+.edit_car_section_label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #98a2b3;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 6px;
+}
+
+.edit_car_checks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.edit_car_check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 11px;
+  border: 1.5px solid #e4e7ec;
+  border-radius: 9px;
+  background: #f9fafb;
+  font-size: 13px;
+  font-weight: 500;
+  color: #0b1220;
+  cursor: pointer;
+  user-select: none;
+  transition: all 150ms ease;
+}
+
+.edit_car_check:has(input:checked) {
+  border-color: #0d6efd;
+  background: #eff4ff;
+}
+
+.edit_car_check input { accent-color: #0d6efd; cursor: pointer; }
+
+.edit_car_actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.edit_car_btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid #e4e7ec;
+  background: #fff;
+  color: #0b1220;
+  min-height: 46px;
+  transition: all 150ms ease;
+}
+
+.edit_car_btn.primary {
+  background: #0d6efd;
+  border-color: #0d6efd;
+  color: #fff;
+}
+.edit_car_btn.primary:hover:not(:disabled) { filter: brightness(0.94); }
+.edit_car_btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.edit_car_spinner {
+  display: inline-block;
+  width: 16px; height: 16px;
+  border: 2.2px solid rgba(255,255,255,0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: ec-spin 700ms linear infinite;
+}
+@keyframes ec-spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 520px) {
+  .edit_car_row, .edit_car_checks { grid-template-columns: 1fr; }
+  .edit_car_body { padding: 24px 20px; }
+}

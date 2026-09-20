@@ -1,0 +1,246 @@
+
+.photo_manager_modal .modal-content {
+  border-radius: 20px !important;
+  border: none !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+}
+
+.photo_manager_body {
+  padding: 28px 26px 24px;
+  position: relative;
+  font-family: "Poppins", sans-serif;
+}
+
+.photo_manager_close {
+  position: absolute;
+  top: 16px; right: 16px;
+  width: 32px; height: 32px;
+  border-radius: 8px; border: none;
+  background: #f9fafb; color: #475467;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 150ms ease;
+}
+.photo_manager_close:hover { background: #f2f4f7; color: #0b1220; }
+
+.photo_manager_title {
+  font-family: "Plus Jakarta Sans", "Poppins", sans-serif;
+  font-size: 20px; font-weight: 700;
+  color: #0b1220; margin: 0 0 4px;
+}
+
+.photo_manager_subtitle {
+  font-size: 13px; color: #475467; margin: 0 0 18px;
+}
+
+.photo_manager_alert {
+  display: flex; gap: 8px; align-items: flex-start;
+  background: #fef3f2; border: 1px solid #fecdca;
+  color: #b42318; font-size: 13px;
+  padding: 10px 12px; border-radius: 8px;
+  margin-bottom: 14px;
+}
+
+/* Dropzone */
+.photo_dropzone {
+  border: 2px dashed #e4e7ec;
+  border-radius: 14px;
+  padding: 28px 20px;
+  text-align: center;
+  cursor: pointer;
+  background: #f9fafb;
+  transition: all 180ms ease;
+  margin-bottom: 20px;
+}
+
+.photo_dropzone:hover {
+  border-color: #0d6efd;
+  background: #eff4ff;
+}
+
+.photo_dropzone_icon {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  background: #eff4ff; color: #0d6efd;
+  display: inline-flex; align-items: center; justify-content: center;
+  margin-bottom: 10px;
+}
+
+.photo_dropzone_title {
+  font-size: 14px; font-weight: 600;
+  color: #0b1220; margin: 0 0 4px;
+}
+
+.photo_dropzone_hint {
+  font-size: 12px; color: #98a2b3; margin: 0;
+}
+
+/* Grid */
+.photo_grid_header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 10px; font-size: 13px;
+  color: #475467; font-weight: 500;
+}
+
+.photo_grid_hint { font-size: 11.5px; color: #98a2b3; }
+
+.photo_grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.photo_tile {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #f2f4f7;
+  border: 2px solid transparent;
+  transition: all 180ms ease;
+}
+
+.photo_tile.is_primary { border-color: #0d6efd; }
+.photo_tile.is_pending { opacity: 0.6; }
+
+.photo_tile img {
+  width: 100%; height: 100%;
+  object-fit: cover; display: block;
+}
+
+.photo_primary_badge {
+  position: absolute;
+  top: 6px; left: 6px;
+  display: inline-flex; align-items: center; gap: 4px;
+  background: #0d6efd; color: #fff;
+  font-size: 10.5px; font-weight: 600;
+  padding: 3px 7px; border-radius: 6px;
+}
+
+.photo_tile_actions {
+  position: absolute;
+  bottom: 6px; right: 6px;
+  display: flex; gap: 4px;
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.photo_tile:hover .photo_tile_actions { opacity: 1; }
+
+.photo_tile_btn {
+  width: 28px; height: 28px;
+  border-radius: 7px; border: none;
+  background: rgba(255, 255, 255, 0.95);
+  color: #0b1220;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 150ms ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.photo_tile_btn:hover { background: #fff; }
+.photo_tile_btn.danger { color: #b42318; }
+.photo_tile_btn.danger:hover { background: #fef3f2; }
+
+.photo_empty {
+  text-align: center;
+  font-size: 13.5px;
+  color: #98a2b3;
+  padding: 20px 0;
+  margin: 0 0 16px;
+}
+
+.photo_manager_actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.photo_manager_btn {
+  padding: 11px 22px;
+  border-radius: 10px;
+  border: 1.5px solid #e4e7ec;
+  background: #fff; color: #0b1220;
+  font-family: inherit;
+  font-size: 14px; font-weight: 600;
+  cursor: pointer;
+  min-height: 44px;
+  transition: all 150ms ease;
+}
+
+.photo_manager_btn.primary {
+  background: #0d6efd;
+  border-color: #0d6efd;
+  color: #fff;
+}
+.photo_manager_btn.primary:hover { filter: brightness(0.94); }
+
+@media (max-width: 520px) {
+  .photo_grid { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); }
+  .photo_manager_body { padding: 22px 18px; }
+}
+
+
+/* Staged tile */
+.photo_tile.is_staged {
+  border: 2px dashed #0d6efd;
+  background: #eff4ff;
+}
+
+.photo_remove_btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  border: none;
+  background: rgba(180, 35, 24, 0.95);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+  transition: all 150ms ease;
+  z-index: 2;
+}
+.photo_remove_btn:hover:not(:disabled) { background: #912018; }
+.photo_remove_btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.photo_clear_btn {
+  border: none;
+  background: transparent;
+  color: #b42318;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+  transition: background 150ms ease;
+}
+.photo_clear_btn:hover:not(:disabled) { background: #fef3f2; }
+.photo_clear_btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.photo_tile_fallback {
+  width: 100%;
+  height: 100%;
+  background: #f2f4f7;
+}
+
+/* Dropzone disabled state */
+.photo_dropzone.is_disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Footer spacing when two buttons */
+.photo_manager_actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+.photo_manager_actions .photo_manager_btn {
+  flex: 0 1 auto;
+}

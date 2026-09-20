@@ -336,3 +336,162 @@
     animation: none !important;
   }
 }
+
+/* Add these to src/pages/MyCars.css */
+
+/* Action buttons on the card */
+.my_car_actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.my_car_action_btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 1.5px solid var(--myc-border);
+  background: var(--myc-surface);
+  color: var(--myc-ink);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.my_car_action_btn:hover:not(:disabled) {
+  border-color: var(--myc-accent);
+  color: var(--myc-accent);
+  background: var(--myc-accent-soft);
+}
+
+.my_car_action_btn.danger:hover:not(:disabled) {
+  border-color: var(--myc-danger);
+  color: var(--myc-danger);
+  background: var(--myc-danger-bg);
+}
+
+.my_car_action_btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Photo count badge on media */
+.my_car_photo_count {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  background: rgba(11, 18, 32, 0.78);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 6px;
+  min-width: 22px;
+  text-align: center;
+}
+
+.my_car_media { position: relative; }
+
+/* Toast */
+.myc_toast {
+  background: #ecfdf3;
+  color: #067647;
+  border: 1px solid #abefc6;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 16px;
+  animation: myc_toast_in 220ms ease;
+}
+
+.myc_toast.error {
+  background: #fef3f2;
+  color: #b42318;
+  border-color: #fecdca;
+}
+
+@keyframes myc_toast_in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Confirm modal */
+.myc_confirm_modal .modal-content {
+  border-radius: 20px !important;
+  border: none !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+}
+
+.myc_confirm_body {
+  padding: 32px 28px 24px;
+  text-align: center;
+  font-family: "Poppins", sans-serif;
+}
+
+.myc_confirm_icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #fef3f2;
+  color: #b42318;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+.myc_confirm_title {
+  font-family: "Plus Jakarta Sans", "Poppins", sans-serif;
+  font-size: 19px;
+  font-weight: 700;
+  color: #0b1220;
+  margin: 0 0 8px;
+}
+
+.myc_confirm_copy {
+  font-size: 13.5px;
+  color: #475467;
+  line-height: 1.55;
+  margin: 0 0 22px;
+}
+
+.myc_confirm_actions {
+  display: flex;
+  gap: 10px;
+}
+
+.myc_confirm_actions .myc_btn {
+  flex: 1;
+  justify-content: center;
+}
+
+.myc_btn.danger {
+  background: #b42318;
+  border-color: #b42318;
+  color: #fff;
+}
+.myc_btn.danger:hover:not(:disabled) { filter: brightness(0.94); }
+.myc_btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.myc_spinner {
+  display: inline-block;
+  width: 15px; height: 15px;
+  border: 2.2px solid rgba(255,255,255,0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: myc-spin 700ms linear infinite;
+}
+@keyframes myc-spin { to { transform: rotate(360deg); } }
+
+
+/* Add to MyCars.css */
+.my_car_media {
+  position: relative;
+  background: var(--myc-surface-3);
+  color: var(--myc-muted);
+}
+.my_car_media > svg { position: absolute; inset: 0; margin: auto; }
+.my_car_media img { position: relative; z-index: 1; }

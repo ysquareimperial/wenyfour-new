@@ -68,7 +68,7 @@ const Icon = {
 const MAIN_NAV = [
   { to: "/search-ride", label: "Find a ride", icon: <Icon.Search /> },
   { to: "/my-rides",    label: "My rides",    icon: <Icon.Route />  },
-  { to: "/my-cars",     label: "My cars",     icon: <Icon.Car />    },
+  { to: "/my-cars",     label: "My cars",  icon: <Icon.Car />    },
 ];
 
 const DRIVER_NAV = [

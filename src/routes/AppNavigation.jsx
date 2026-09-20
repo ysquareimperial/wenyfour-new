@@ -15,6 +15,7 @@ import CompleteProfile from "../pages/CompleteProfile";
 import AddCar from "../pages/AddCar";
 import PublishRide from "../pages/PublishRide";
 import MyCars from "../pages/MyCars";
+import MyRides from "../pages/MyRides";
 
 function AppNavigation() {
   return useRoutes([
@@ -55,20 +56,28 @@ function AppNavigation() {
         },
         {
           path: "/rides/publish",
-          element: (  
+          element: (
             <ProtectedRoute>
               <PublishRide />
             </ProtectedRoute>
           ),
         },
         {
-  path: "/my-cars",
-  element: (
-    <ProtectedRoute>
-      <MyCars />
-    </ProtectedRoute>
-  ),
-},
+          path: "/my-cars",
+          element: (
+            <ProtectedRoute>
+              <MyCars />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: "/my-rides",
+          element: (
+            <ProtectedRoute>
+              <MyRides />
+            </ProtectedRoute>
+          ),
+        },
       ],
     },
 
