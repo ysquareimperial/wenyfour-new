@@ -2,6 +2,10 @@
 import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./AddCar.css";
+// src/pages/AddCar.jsx
+import { useAuth } from "../context/AuthContext";
+import { getDriverEligibility } from "../utils/driverEligibility";
+import DriverGateModal from "./DriverGateModal";
 
 const API_BASE = "https://api.wenyfour.com.ng";
 
@@ -92,6 +96,10 @@ const AddCar = () => {
   const [errorMsg, setErrorMsg] = useState("");
   const [createdCar, setCreatedCar] = useState(null);
 
+  const { user, refreshProfile } = useAuth();
+const eligibility = getDriverEligibility(user);
+const [gateOpen, setGateOpen] = useState(false);
+
   const set = (key) => (e) => {
     const value = e?.target?.type === "checkbox" ? e.target.checked : e.target.value;
     setForm((f) => ({ ...f, [key]: value }));
@@ -138,6 +146,13 @@ const AddCar = () => {
     if (!token) {
       setStatus("error");
       setErrorMsg("You need to be signed in to add a car.");
+      return;
+    }
+
+        // Gate: block car creation if the user isn't eligible to drive
+    if (!eligibility.eligible) {
+      setGateOpen(true);
+      setStatus("idle");
       return;
     }
 
@@ -404,6 +419,13 @@ const AddCar = () => {
           </div>
         </form>
       </div>
+            <DriverGateModal
+        open={gateOpen}
+        onClose={() => setGateOpen(false)}
+        eligibility={eligibility}
+        onRefresh={refreshProfile}
+        actionLabel="create a car"
+      />
     </div>
   );
 };

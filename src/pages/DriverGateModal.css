@@ -1,0 +1,154 @@
+/* src/components/DriverGateModal.css */
+
+.dgm_overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 18, 32, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 1000;
+  animation: dgm_fade 160ms ease;
+}
+
+@keyframes dgm_fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.dgm_card {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 28px 24px 24px;
+  box-shadow: 0 24px 60px rgba(11, 18, 32, 0.25);
+  animation: dgm_pop 180ms ease;
+}
+
+@keyframes dgm_pop {
+  from { transform: translateY(8px) scale(0.98); opacity: 0; }
+  to   { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.dgm_close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: #98a2b3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.dgm_close:hover {
+  background: #f2f4f7;
+  color: #0b1220;
+}
+
+.dgm_icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #eff4ff;
+  color: #0d6efd;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.dgm_title {
+  font-family: "Plus Jakarta Sans", "Poppins", sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: #0b1220;
+}
+
+.dgm_copy {
+  font-size: 14px;
+  color: #475467;
+  line-height: 1.55;
+  margin: 0 0 18px;
+}
+
+.dgm_reasons {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dgm_reasons li {
+  display: flex;
+  gap: 10px;
+  font-size: 13.5px;
+  color: #0b1220;
+  line-height: 1.5;
+}
+
+.dgm_dot {
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #0d6efd;
+  margin-top: 7px;
+}
+
+.dgm_actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dgm_btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 18px;
+  border-radius: 10px;
+  border: 1.5px solid #e4e7ec;
+  background: #ffffff;
+  color: #0b1220;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 150ms ease;
+  min-height: 46px;
+}
+
+.dgm_btn.primary {
+  background: #0d6efd;
+  border-color: #0d6efd;
+  color: #ffffff;
+}
+
+.dgm_btn.primary:hover {
+  filter: brightness(0.94);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(13, 110, 253, 0.25);
+}
+
+.dgm_btn.ghost:hover {
+  background: #f9fafb;
+}
+
+@media (max-width: 480px) {
+  .dgm_card { padding: 24px 18px 20px; }
+  .dgm_title { font-size: 18px; }
+}

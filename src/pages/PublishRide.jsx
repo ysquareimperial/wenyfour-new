@@ -3,6 +3,9 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import './PublishRide.css';
 import { TimeField, DateField } from '../Components/DateTimeFields';
+import { useAuth } from "../context/AuthContext";
+import DriverGateModal from './DriverGateModal';
+import { getDriverEligibility } from '../utils/driverEligibility';
 
 const API_BASE = 'https://api.wenyfour.com.ng';
 
@@ -161,6 +164,10 @@ const PublishRide = () => {
 
   const today = todayISO();
 
+const { user, refreshProfile } = useAuth();
+const eligibility = getDriverEligibility(user);
+const [gateOpen, setGateOpen] = useState(false);
+
   /* ---------------- fetch cars ---------------- */
 
   useEffect(() => {
@@ -280,6 +287,11 @@ const PublishRide = () => {
     if (!token) {
       setStatus('error');
       setErrorMsg('You need to be signed in to publish a ride.');
+      return;
+    }
+
+        if (!eligibility.eligible) {
+      setGateOpen(true);
       return;
     }
 
@@ -454,22 +466,39 @@ const PublishRide = () => {
         )}
 
         {/* No-cars guard */}
-        {noCars && (
+              {noCars && (
           <div className="pr_alert" role="alert">
             <Icon.Alert />
             <div>
-              <span>You need a car on your profile before you can publish a ride.</span>
-              <button
-                type="button"
-                className="pr_alert_link"
-                onClick={() => navigate('/cars/new')}
-              >
-                Add a car
-              </button>
+              {eligibility.eligible ? (
+                <>
+                  <span>You need a car on your profile before you can publish a ride.</span>
+                  <button
+                    type="button"
+                    className="pr_alert_link"
+                    onClick={() => navigate("/cars/new")}
+                  >
+                    Add a car
+                  </button>
+                </>
+              ) : (
+                <>
+                  <span>
+                    You need to complete your driver verification before you can
+                    publish a ride.
+                  </span>
+                  <button
+                    type="button"
+                    className="pr_alert_link"
+                    onClick={() => setGateOpen(true)}
+                  >
+                    Complete verification
+                  </button>
+                </>
+              )}
             </div>
           </div>
         )}
-
         <form className="pr_form" onSubmit={handleSubmit} noValidate>
           {/* ---- Car ---- */}
           <section className="pr_section">
@@ -749,6 +778,13 @@ const PublishRide = () => {
           </div>
         </form>
       </div>
+            <DriverGateModal
+        open={gateOpen}
+        onClose={() => setGateOpen(false)}
+        eligibility={eligibility}
+        onRefresh={refreshProfile}
+        actionLabel="publish a ride"
+      />
     </div>
   );
 };
