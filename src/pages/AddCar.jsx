@@ -49,8 +49,18 @@ const INITIAL_FORM = {
 const Icon = {
   Car: (p) => (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" {...p}>
-      <path d="M4 15v-2.2l1.4-3.9A2 2 0 0 1 7.3 7.5h9.4a2 2 0 0 1 1.9 1.4L20 12.8V15" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
-      <path d="M3.5 15h17v3.2a1 1 0 0 1-1 1h-1.6a1 1 0 0 1-1-1V18H7.1v.2a1 1 0 0 1-1 1H4.5a1 1 0 0 1-1-1V15Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+      <path
+        d="M4 15v-2.2l1.4-3.9A2 2 0 0 1 7.3 7.5h9.4a2 2 0 0 1 1.9 1.4L20 12.8V15"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M3.5 15h17v3.2a1 1 0 0 1-1 1h-1.6a1 1 0 0 1-1-1V18H7.1v.2a1 1 0 0 1-1 1H4.5a1 1 0 0 1-1-1V15Z"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinejoin="round"
+      />
       <circle cx="7.5" cy="15" r=".9" fill="currentColor" />
       <circle cx="16.5" cy="15" r=".9" fill="currentColor" />
     </svg>
@@ -58,29 +68,65 @@ const Icon = {
   Alert: (p) => (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" {...p}>
       <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.7" />
-      <path d="M12 7.5v6M12 16.6v.2" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+      <path
+        d="M12 7.5v6M12 16.6v.2"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+      />
     </svg>
   ),
   Check: (p) => (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" {...p}>
-      <path d="M5 12.5 10 17.5 19 7.5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M5 12.5 10 17.5 19 7.5"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   ),
   Arrow: (p) => (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" {...p}>
-      <path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M5 12h13M13 6l6 6-6 6"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   ),
   Image: (p) => (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" {...p}>
-      <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="1.7" />
+      <rect
+        x="3"
+        y="3"
+        width="18"
+        height="18"
+        rx="2"
+        stroke="currentColor"
+        strokeWidth="1.7"
+      />
       <circle cx="9" cy="9" r="2" stroke="currentColor" strokeWidth="1.7" />
-      <path d="m21 15-5-5L5 21" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="m21 15-5-5L5 21"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   ),
   Close: (p) => (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" {...p}>
-      <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path
+        d="M6 6l12 12M18 6L6 18"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
     </svg>
   ),
 };
@@ -97,11 +143,12 @@ const AddCar = () => {
   const [createdCar, setCreatedCar] = useState(null);
 
   const { user, refreshProfile } = useAuth();
-const eligibility = getDriverEligibility(user);
-const [gateOpen, setGateOpen] = useState(false);
+  const eligibility = getDriverEligibility(user);
+  const [gateOpen, setGateOpen] = useState(false);
 
   const set = (key) => (e) => {
-    const value = e?.target?.type === "checkbox" ? e.target.checked : e.target.value;
+    const value =
+      e?.target?.type === "checkbox" ? e.target.checked : e.target.value;
     setForm((f) => ({ ...f, [key]: value }));
   };
   const setDirect = (key, value) => setForm((f) => ({ ...f, [key]: value }));
@@ -137,7 +184,8 @@ const [gateOpen, setGateOpen] = useState(false);
     if (!form.model.trim()) return setErrorMsg("Please enter the car model.");
     if (!form.year) return setErrorMsg("Please enter the year of manufacture.");
     if (!form.color.trim()) return setErrorMsg("Please enter the car colour.");
-    if (!form.plate_number.trim()) return setErrorMsg("Please enter the plate number.");
+    if (!form.plate_number.trim())
+      return setErrorMsg("Please enter the plate number.");
     if (!form.capacity || Number(form.capacity) < 1) {
       return setErrorMsg("Capacity must be at least 1.");
     }
@@ -149,7 +197,7 @@ const [gateOpen, setGateOpen] = useState(false);
       return;
     }
 
-        // Gate: block car creation if the user isn't eligible to drive
+    // Gate: block car creation if the user isn't eligible to drive
     if (!eligibility.eligible) {
       setGateOpen(true);
       setStatus("idle");
@@ -191,11 +239,15 @@ const [gateOpen, setGateOpen] = useState(false);
         try {
           const body = await res.json();
           if (Array.isArray(body?.detail)) {
-            detail = body.detail.map((d) => `${d.loc?.join(".")}: ${d.msg}`).join("; ");
+            detail = body.detail
+              .map((d) => `${d.loc?.join(".")}: ${d.msg}`)
+              .join("; ");
           } else if (typeof body?.detail === "string") {
             detail = body.detail;
           }
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
 
         if (res.status === 401 || res.status === 403) {
           throw new Error("Your session has expired. Please sign in again.");
@@ -217,7 +269,9 @@ const [gateOpen, setGateOpen] = useState(false);
 
   const goToPublish = () => {
     if (!createdCar) return;
-    navigate("/rides/publish", { state: { carId: createdCar.id, car: createdCar } });
+    navigate("/rides/publish", {
+      state: { carId: createdCar.id, car: createdCar },
+    });
   };
 
   const resetToForm = () => {
@@ -229,7 +283,9 @@ const [gateOpen, setGateOpen] = useState(false);
   /* ---------------- success screen ---------------- */
 
   if (status === "success" && createdCar) {
-    const photoCount = Array.isArray(createdCar.photos) ? createdCar.photos.length : 0;
+    const photoCount = Array.isArray(createdCar.photos)
+      ? createdCar.photos.length
+      : 0;
     return (
       <div className="add_car_page">
         <div className="ac_inner">
@@ -239,18 +295,25 @@ const [gateOpen, setGateOpen] = useState(false);
             </div>
             <h1 className="ac_state_title">Car added</h1>
             <p className="ac_state_copy">
-              <strong>{createdCar.make} {createdCar.model}</strong>
-              {createdCar.year ? ` (${createdCar.year})` : ""} is now on your profile.
+              <strong>
+                {createdCar.make} {createdCar.model}
+              </strong>
+              {createdCar.year ? ` (${createdCar.year})` : ""} is now on your
+              profile.
             </p>
 
             <div className="ac_success_summary">
               <div className="ac_success_row">
                 <span className="ac_success_label">Plate</span>
-                <span className="ac_success_value">{createdCar.plate_number}</span>
+                <span className="ac_success_value">
+                  {createdCar.plate_number}
+                </span>
               </div>
               <div className="ac_success_row">
                 <span className="ac_success_label">Capacity</span>
-                <span className="ac_success_value">{createdCar.capacity} seats</span>
+                <span className="ac_success_value">
+                  {createdCar.capacity} seats
+                </span>
               </div>
               <div className="ac_success_row">
                 <span className="ac_success_label">Colour</span>
@@ -263,15 +326,27 @@ const [gateOpen, setGateOpen] = useState(false);
             </div>
 
             <div className="ac_state_actions">
-              <button type="button" className="ac_btn primary" onClick={goToPublish}>
+              <button
+                type="button"
+                className="ac_btn primary"
+                onClick={goToPublish}
+              >
                 Publish a ride
                 <Icon.Arrow />
               </button>
-              <button type="button" className="ac_btn" onClick={() => navigate("/cars")}>
+              <button
+                type="button"
+                className="ac_btn"
+                onClick={() => navigate("/cars")}
+              >
                 View my cars
                 <Icon.Arrow />
               </button>
-              <button type="button" className="ac_btn ghost" onClick={resetToForm}>
+              <button
+                type="button"
+                className="ac_btn ghost"
+                onClick={resetToForm}
+              >
                 Add another car
               </button>
             </div>
@@ -292,7 +367,8 @@ const [gateOpen, setGateOpen] = useState(false);
           <p className="ac_eyebrow">Driver profile</p>
           <h1 className="ac_title">Add your car</h1>
           <p className="ac_subtitle">
-            Tell us about the car you&apos;ll be driving. You can add more cars later.
+            Tell us about the car you&apos;ll be driving. You can add more cars
+            later.
           </p>
         </header>
 
@@ -309,48 +385,116 @@ const [gateOpen, setGateOpen] = useState(false);
 
             <div className="ac_row">
               <div className="ac_field">
-                <label className="ac_label" htmlFor="ac_make">Make</label>
+                <label className="ac_label" htmlFor="ac_make">
+                  Make
+                </label>
                 <div className="ac_input_wrap">
-                  <span className="ac_input_icon" aria-hidden="true"><Icon.Car /></span>
-                  <input id="ac_make" className="ac_input" type="text" autoComplete="off"
-                    placeholder="e.g. Toyota" value={form.make} onChange={set("make")} required />
+                  <span className="ac_input_icon" aria-hidden="true">
+                    <Icon.Car />
+                  </span>
+                  <input
+                    id="ac_make"
+                    className="ac_input"
+                    type="text"
+                    autoComplete="off"
+                    placeholder="e.g. Toyota"
+                    value={form.make}
+                    onChange={set("make")}
+                    required
+                  />
                 </div>
               </div>
               <div className="ac_field">
-                <label className="ac_label" htmlFor="ac_model">Model</label>
+                <label className="ac_label" htmlFor="ac_model">
+                  Model
+                </label>
                 <div className="ac_input_wrap">
-                  <span className="ac_input_icon" aria-hidden="true"><Icon.Car /></span>
-                  <input id="ac_model" className="ac_input" type="text" autoComplete="off"
-                    placeholder="e.g. Camry" value={form.model} onChange={set("model")} required />
+                  <span className="ac_input_icon" aria-hidden="true">
+                    <Icon.Car />
+                  </span>
+                  <input
+                    id="ac_model"
+                    className="ac_input"
+                    type="text"
+                    autoComplete="off"
+                    placeholder="e.g. Camry"
+                    value={form.model}
+                    onChange={set("model")}
+                    required
+                  />
                 </div>
               </div>
             </div>
 
             <div className="ac_row">
               <div className="ac_field">
-                <label className="ac_label" htmlFor="ac_year">Year</label>
-                <input id="ac_year" className="ac_input no_icon" type="number" inputMode="numeric"
-                  min={MIN_YEAR} max={CURRENT_YEAR + 1} placeholder={String(CURRENT_YEAR)}
-                  value={form.year} onChange={set("year")} required />
+                <label className="ac_label" htmlFor="ac_year">
+                  Year
+                </label>
+                <input
+                  id="ac_year"
+                  className="ac_input no_icon"
+                  type="number"
+                  inputMode="numeric"
+                  min={MIN_YEAR}
+                  max={CURRENT_YEAR + 1}
+                  placeholder={String(CURRENT_YEAR)}
+                  value={form.year}
+                  onChange={set("year")}
+                  required
+                />
               </div>
               <div className="ac_field">
-                <label className="ac_label" htmlFor="ac_color">Colour</label>
-                <input id="ac_color" className="ac_input no_icon" type="text" autoComplete="off"
-                  placeholder="e.g. Black" value={form.color} onChange={set("color")} required />
+                <label className="ac_label" htmlFor="ac_color">
+                  Colour
+                </label>
+                <input
+                  id="ac_color"
+                  className="ac_input no_icon"
+                  type="text"
+                  autoComplete="off"
+                  placeholder="e.g. Black"
+                  value={form.color}
+                  onChange={set("color")}
+                  required
+                />
               </div>
             </div>
 
             <div className="ac_row">
               <div className="ac_field">
-                <label className="ac_label" htmlFor="ac_plate">Plate number</label>
-                <input id="ac_plate" className="ac_input no_icon" type="text" autoComplete="off"
-                  placeholder="e.g. ABC-123-XY" value={form.plate_number} onChange={set("plate_number")} required />
+                <label className="ac_label" htmlFor="ac_plate">
+                  Plate number
+                </label>
+                <input
+                  id="ac_plate"
+                  className="ac_input no_icon"
+                  type="text"
+                  autoComplete="off"
+                  placeholder="e.g. ABC-123-XY"
+                  value={form.plate_number}
+                  onChange={set("plate_number")}
+                  required
+                />
               </div>
               <div className="ac_field">
-                <label className="ac_label" htmlFor="ac_capacity">Capacity</label>
-                <input id="ac_capacity" className="ac_input no_icon" type="number" inputMode="numeric"
-                  min="1" max="20" value={form.capacity} onChange={set("capacity")} required />
-                <span className="ac_hint">Total seats including the driver.</span>
+                <label className="ac_label" htmlFor="ac_capacity">
+                  Capacity
+                </label>
+                <input
+                  id="ac_capacity"
+                  className="ac_input no_icon"
+                  type="number"
+                  inputMode="numeric"
+                  min="1"
+                  max="20"
+                  value={form.capacity}
+                  onChange={set("capacity")}
+                  required
+                />
+                <span className="ac_hint">
+                  Total seats including the driver.
+                </span>
               </div>
             </div>
           </section>
@@ -361,7 +505,12 @@ const [gateOpen, setGateOpen] = useState(false);
             {preview ? (
               <div className="ac_photo_preview">
                 <img src={preview} alt="Car preview" />
-                <button type="button" className="ac_photo_remove" onClick={clearFile} aria-label="Remove photo">
+                <button
+                  type="button"
+                  className="ac_photo_remove"
+                  onClick={clearFile}
+                  aria-label="Remove photo"
+                >
                   <Icon.Close />
                 </button>
               </div>
@@ -373,7 +522,9 @@ const [gateOpen, setGateOpen] = useState(false);
               >
                 <Icon.Image />
                 <span>Add a photo</span>
-                <span className="ac_photo_drop_hint">JPG or PNG, up to 8MB</span>
+                <span className="ac_photo_drop_hint">
+                  JPG or PNG, up to 8MB
+                </span>
               </button>
             )}
             <input
@@ -389,16 +540,22 @@ const [gateOpen, setGateOpen] = useState(false);
             <h2 className="ac_section_title">Features</h2>
 
             <label className="ac_check">
-              <input type="checkbox" checked={form.is_tinted}
-                onChange={(e) => setDirect("is_tinted", e.target.checked)} />
+              <input
+                type="checkbox"
+                checked={form.is_tinted}
+                onChange={(e) => setDirect("is_tinted", e.target.checked)}
+              />
               <span>Tinted windows</span>
             </label>
 
             <div className="ac_check_grid">
               {AMENITY_FIELDS.map((f) => (
                 <label key={f.key} className="ac_check">
-                  <input type="checkbox" checked={!!form[f.key]}
-                    onChange={(e) => setDirect(f.key, e.target.checked)} />
+                  <input
+                    type="checkbox"
+                    checked={!!form[f.key]}
+                    onChange={(e) => setDirect(f.key, e.target.checked)}
+                  />
                   <span>{f.label}</span>
                 </label>
               ))}
@@ -406,7 +563,12 @@ const [gateOpen, setGateOpen] = useState(false);
           </section>
 
           <div className="ac_form_footer">
-            <button type="submit" className="ac_submit" disabled={submitting} aria-busy={submitting}>
+            <button
+              type="submit"
+              className="ac_submit"
+              disabled={submitting}
+              aria-busy={submitting}
+            >
               {submitting ? (
                 <>
                   <span className="ac_spinner" aria-hidden="true" />
@@ -419,7 +581,7 @@ const [gateOpen, setGateOpen] = useState(false);
           </div>
         </form>
       </div>
-            <DriverGateModal
+      <DriverGateModal
         open={gateOpen}
         onClose={() => setGateOpen(false)}
         eligibility={eligibility}

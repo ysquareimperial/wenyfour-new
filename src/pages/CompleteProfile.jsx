@@ -134,34 +134,68 @@ const CompleteProfile = () => {
     e.preventDefault();
     setError(null);
 
+    // A photo is required to complete the profile.
     if (!photoFile && !user?.photo_url) {
       setError("Please add a profile photo to finish your profile.");
       return;
     }
 
     setLoading(true);
-    try {
-      // Step 1: save profile fields. The photo endpoint refuses uploads
-      // until this information is already saved.
-      const { data } = await api.put("/profile/me", buildPayload());
-      let latestProfile = data;
 
-      // Step 2: upload the photo, if the user picked a new one.
+    try {
+      // ============================================================
+      // STEP 1: UPDATE PROFILE INFORMATION
+      // ============================================================
+      // Do NOT consider the profile complete here.
+      // The PUT endpoint only saves the user's information.
+      await api.put("/profile/me", buildPayload());
+
+      // ============================================================
+      // STEP 2: UPLOAD PROFILE PHOTO
+      // ============================================================
+      // This must happen ONLY after the profile update succeeds.
+      let latestProfile;
+
       if (photoFile) {
         const uploadForm = new FormData();
         uploadForm.append("file", photoFile, "avatar.jpg");
-        const { data: photoData } = await api.post("/profile/me/photo", uploadForm);
+
+        const { data: photoData } = await api.post(
+          "/profile/me/photo",
+          uploadForm,
+        );
+
+        // The photo upload response is now our source of truth.
         latestProfile = photoData;
+      } else {
+        // Existing photo means there is nothing to upload.
+        // Keep the existing user profile.
+        latestProfile = {
+          ...user,
+          photo_url: user?.photo_url,
+        };
       }
 
+      // ============================================================
+      // STEP 3: ONLY NOW UPDATE AUTH STATE
+      // ============================================================
       updateProfile({
         ...latestProfile,
         nin_verified: latestProfile.nin_verification_status === "verified",
       });
 
+      // ============================================================
+      // STEP 4: SHOW SUCCESS
+      // ============================================================
       setShowSuccessModal(true);
     } catch (err) {
-      setError(err.response?.data?.detail || "Failed to update profile. Please try again.");
+      console.error("Profile completion error:", err);
+
+      setError(
+        err.response?.data?.detail ||
+          err.message ||
+          "Failed to update profile. Please try again.",
+      );
     } finally {
       setLoading(false);
     }
@@ -178,8 +212,8 @@ const CompleteProfile = () => {
         <div className="profile_header">
           <h1>Complete Your Profile</h1>
           <p>
-            Help us get to know you better. This information helps us provide a safer ride-sharing
-            experience.
+            Help us get to know you better. This information helps us provide a
+            safer ride-sharing experience.
           </p>
         </div>
 
@@ -218,7 +252,9 @@ const CompleteProfile = () => {
                   onChange={handlePhotoPick}
                   style={{ display: "none" }}
                 />
-                <p className="field_hint">JPG or PNG. You'll be able to crop it to a square first.</p>
+                <p className="field_hint">
+                  JPG or PNG. You'll be able to crop it to a square first.
+                </p>
               </div>
             </div>
           </div>
@@ -247,7 +283,13 @@ const CompleteProfile = () => {
             <div className="field_group">
               <label className="field_label">Gender *</label>
               <div className="input_wrap">
-                <select className="input_field" name="gender" value={formData.gender} onChange={handleChange} required>
+                <select
+                  className="input_field"
+                  name="gender"
+                  value={formData.gender}
+                  onChange={handleChange}
+                  required
+                >
                   <option value="">Select gender</option>
                   {genders.map((gender) => (
                     <option key={gender} value={gender}>
@@ -305,7 +347,12 @@ const CompleteProfile = () => {
             <div className="field_group">
               <label className="field_label">Blood Group</label>
               <div className="input_wrap">
-                <select className="input_field" name="blood_group" value={formData.blood_group} onChange={handleChange}>
+                <select
+                  className="input_field"
+                  name="blood_group"
+                  value={formData.blood_group}
+                  onChange={handleChange}
+                >
                   <option value="">Select blood group</option>
                   {bloodGroups.map((group) => (
                     <option key={group} value={group}>
@@ -391,7 +438,9 @@ const CompleteProfile = () => {
           <div className="form_section">
             <h3>Identification</h3>
             <div className="field_group">
-              <label className="field_label">NIN (National Identification Number)</label>
+              <label className="field_label">
+                NIN (National Identification Number)
+              </label>
               <div className="input_wrap">
                 <input
                   className="input_field"
@@ -403,7 +452,8 @@ const CompleteProfile = () => {
                 />
               </div>
               <small className="field_hint">
-                NIN cannot be changed after submission. We'll verify it for security purposes.
+                NIN cannot be changed after submission. We'll verify it for
+                security purposes.
               </small>
             </div>
           </div>
@@ -411,7 +461,8 @@ const CompleteProfile = () => {
           <div className="form_section">
             <h3>Ride Preferences (optional)</h3>
             <p className="field_hint" style={{ marginBottom: 12 }}>
-              These help set expectations if you ever offer rides — you can fill them in any time.
+              These help set expectations if you ever offer rides — you can fill
+              them in any time.
             </p>
 
             <div className="field_group">
@@ -431,7 +482,12 @@ const CompleteProfile = () => {
             <div className="field_group">
               <label className="field_label">Chattiness</label>
               <div className="input_wrap">
-                <select className="input_field" name="chattiness" value={formData.chattiness} onChange={handleChange}>
+                <select
+                  className="input_field"
+                  name="chattiness"
+                  value={formData.chattiness}
+                  onChange={handleChange}
+                >
                   <option value="">No preference</option>
                   {CHATTINESS_OPTIONS.map((option) => (
                     <option key={option} value={option}>
@@ -445,7 +501,12 @@ const CompleteProfile = () => {
             <div className="field_group">
               <label className="field_label">Music</label>
               <div className="input_wrap">
-                <select className="input_field" name="music" value={formData.music} onChange={handleChange}>
+                <select
+                  className="input_field"
+                  name="music"
+                  value={formData.music}
+                  onChange={handleChange}
+                >
                   <option value="">No preference</option>
                   {MUSIC_OPTIONS.map((option) => (
                     <option key={option} value={option}>
@@ -459,7 +520,12 @@ const CompleteProfile = () => {
             <div className="field_group">
               <label className="field_label">Smoking</label>
               <div className="input_wrap">
-                <select className="input_field" name="smoking" value={formData.smoking} onChange={handleChange}>
+                <select
+                  className="input_field"
+                  name="smoking"
+                  value={formData.smoking}
+                  onChange={handleChange}
+                >
                   <option value="">No preference</option>
                   {SMOKING_OPTIONS.map((option) => (
                     <option key={option} value={option}>
@@ -473,7 +539,12 @@ const CompleteProfile = () => {
             <div className="field_group">
               <label className="field_label">Pets</label>
               <div className="input_wrap">
-                <select className="input_field" name="pets" value={formData.pets} onChange={handleChange}>
+                <select
+                  className="input_field"
+                  name="pets"
+                  value={formData.pets}
+                  onChange={handleChange}
+                >
                   <option value="">No preference</option>
                   {PETS_OPTIONS.map((option) => (
                     <option key={option} value={option}>
@@ -492,20 +563,42 @@ const CompleteProfile = () => {
       </div>
 
       {cropSource && (
-        <AvatarCropper imageSrc={cropSource} onCancel={handleCropCancel} onSave={handleCropSave} />
+        <AvatarCropper
+          imageSrc={cropSource}
+          onCancel={handleCropCancel}
+          onSave={handleCropSave}
+        />
       )}
 
-      <Modal isOpen={showSuccessModal} centered className="success_modal" size="md" backdrop="static">
+      <Modal
+        isOpen={showSuccessModal}
+        centered
+        className="success_modal"
+        size="md"
+        backdrop="static"
+      >
         <ModalBody className="success_modal_body">
           <div className="success_icon">
-            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M20 6L9 17L4 12" strokeLinecap="round" strokeLinejoin="round" />
+            <svg
+              width="60"
+              height="60"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path
+                d="M20 6L9 17L4 12"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </div>
           <h3>Profile Submitted! 🎉</h3>
           <p>
-            Your profile has been successfully submitted. Our team will review and verify your
-            information. You'll be notified once your account is approved.
+            Your profile has been successfully submitted. Our team will review
+            and verify your information. You'll be notified once your account is
+            approved.
           </p>
           <button className="auth_submit" onClick={handleContinue}>
             Go to Dashboard
