@@ -586,6 +586,7 @@ const AddCar = () => {
         onClose={() => setGateOpen(false)}
         eligibility={eligibility}
         onRefresh={refreshProfile}
+        user={user} // 👈 pass user
         actionLabel="create a car"
       />
     </div>

@@ -23,7 +23,12 @@ const Icon = {
   ),
   Close: (p) => (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" {...p}>
-      <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path
+        d="M6 6l12 12M18 6 6 18"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
     </svg>
   ),
   Arrow: (p) => (
@@ -50,7 +55,13 @@ const Icon = {
  *   onRefresh    – () => Promise<void>  (re-fetch profile after upload)
  *   actionLabel  – "create a car" | "publish a ride"  (for copy)
  */
-const DriverGateModal = ({ open, onClose, eligibility, onRefresh, actionLabel = "continue" }) => {
+const DriverGateModal = ({
+  open,
+  onClose,
+  eligibility,
+  onRefresh,
+  actionLabel = "continue",
+}) => {
   const [licenseModalOpen, setLicenseModalOpen] = useState(false);
 
   if (!open) return null;
@@ -76,8 +87,8 @@ const DriverGateModal = ({ open, onClose, eligibility, onRefresh, actionLabel = 
 
           <h2 className="dgm_title">Complete your driver profile</h2>
           <p className="dgm_copy">
-            Before you can {actionLabel}, we need to verify a few things about your
-            driver account.
+            Before you can {actionLabel}, we need to verify a few things about
+            your driver account.
           </p>
 
           <ul className="dgm_reasons">
@@ -91,8 +102,8 @@ const DriverGateModal = ({ open, onClose, eligibility, onRefresh, actionLabel = 
             {eligibility?.missingLicense && (
               <li>
                 <span className="dgm_dot" />
-                Your driver's licence details are incomplete. Upload your licence
-                number, expiry date, and photo.
+                Your driver's licence details are incomplete. Upload your
+                licence number, expiry date, and photo.
               </li>
             )}
             {eligibility?.notDriver && (
@@ -126,8 +137,8 @@ const DriverGateModal = ({ open, onClose, eligibility, onRefresh, actionLabel = 
         open={licenseModalOpen}
         onClose={() => setLicenseModalOpen(false)}
         onSuccess={handleUploadSuccess}
-        initialLicenseNumber={eligibility?.user?.driver_profile?.license_number || ""}
-        initialExpiry={eligibility?.user?.driver_profile?.license_expiry_date || ""}
+        initialLicenseNumber={user?.driver_profile?.license_number || ""}
+        initialExpiry={user?.driver_profile?.license_expiry_date || ""}
       />
     </>
   );

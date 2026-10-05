@@ -1250,3 +1250,77 @@
 .ride_search_page :focus-visible {
   outline: none;
 }
+
+/* =========================================================
+   PAGINATION
+   ========================================================= */
+
+.rs_pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+
+.rs_page_btn {
+  min-width: 38px;
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1.5px solid var(--rs-border);
+  background: var(--rs-surface);
+  color: var(--rs-ink);
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 150ms ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rs_page_btn:hover:not(:disabled):not(.active) {
+  border-color: var(--rs-accent);
+  color: var(--rs-accent);
+  background: var(--rs-accent-soft);
+}
+
+.rs_page_btn.active {
+  background: var(--rs-accent);
+  border-color: var(--rs-accent);
+  color: var(--rs-accent-ink);
+  cursor: default;
+}
+
+.rs_page_btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.rs_page_btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px var(--rs-accent-soft);
+  border-color: var(--rs-accent);
+}
+
+.rs_page_ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 38px;
+  color: var(--rs-muted);
+  font-size: 14px;
+  font-weight: 600;
+  user-select: none;
+}
+
+/* Mobile tweaks */
+@media (max-width: 720px) {
+  .rs_pagination { gap: 4px; margin-top: 20px; }
+  .rs_page_btn { min-width: 34px; height: 34px; padding: 0 8px; font-size: 13px; }
+  .rs_page_ellipsis { min-width: 18px; height: 34px; }
+}

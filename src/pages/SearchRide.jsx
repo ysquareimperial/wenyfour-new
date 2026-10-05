@@ -1,86 +1,87 @@
 // src/pages/SearchRide.jsx
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import './SearchRide.css';
-
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import "./SearchRide.css";
+import { useNavigate } from "react-router-dom";
 /* ------------------------------------------------------------------ *
  *  Config
  * ------------------------------------------------------------------ */
 
-const API_BASE = 'https://api.wenyfour.com.ng';
+const API_BASE = "https://api.wenyfour.com.ng";
 const SEARCH_ENDPOINT = `${API_BASE}/rides/search`;
+const PAGE_SIZE = 20;
 
-// Only include sort values that are reasonable against the API surface.
-// If your backend doc changes, adjust here — everything else derives from this.
 const SORT_OPTIONS = [
-  { value: '', label: 'Recommended' },
-  { value: 'price', label: 'Lowest price' },
-  { value: 'pickup_time', label: 'Earliest departure' },
+  { value: "", label: "Recommended" },
+  { value: "price", label: "Lowest price" },
+  { value: "pickup_time", label: "Earliest departure" },
 ];
 
 const AMENITY_FILTERS = [
-  { key: 'has_wifi', label: 'Wi-Fi' },
-  { key: 'has_air_conditioning', label: 'Air conditioning' },
-  { key: 'has_power_outlets', label: 'Power outlets' },
-  { key: 'smoking_allowed', label: 'Smoking allowed' },
-  { key: 'pets_allowed', label: 'Pets allowed' },
-  { key: 'wheelchair_accessible', label: 'Wheelchair accessible' },
+  { key: "has_wifi", label: "Wi-Fi" },
+  { key: "has_air_conditioning", label: "Air conditioning" },
+  { key: "has_power_outlets", label: "Power outlets" },
+  { key: "smoking_allowed", label: "Smoking allowed" },
+  { key: "pets_allowed", label: "Pets allowed" },
+  { key: "wheelchair_accessible", label: "Wheelchair accessible" },
 ];
 
 const AMENITY_LABELS = {
-  has_wifi: 'Wi-Fi',
-  has_air_conditioning: 'A/C',
-  has_power_outlets: 'Power',
-  smoking_allowed: 'Smoking',
-  pets_allowed: 'Pets',
-  wheelchair_accessible: 'Accessible',
+  has_wifi: "Wi-Fi",
+  has_air_conditioning: "A/C",
+  has_power_outlets: "Power",
+  smoking_allowed: "Smoking",
+  pets_allowed: "Pets",
+  wheelchair_accessible: "Accessible",
 };
 
 /* ------------------------------------------------------------------ *
  *  Helpers
  * ------------------------------------------------------------------ */
 
-/** YYYY-MM-DD for today, in local time. */
 function todayISO() {
   const d = new Date();
   const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
 }
 
-/** Format YYYY-MM-DD -> "Sun, Sep 20" */
 function formatDateFriendly(iso) {
-  if (!iso) return '';
-  const [y, m, d] = iso.split('-').map(Number);
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-").map(Number);
   if (!y || !m || !d) return iso;
   const date = new Date(y, m - 1, d);
-  return date.toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
+  return date.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
   });
 }
 
-/** Format "13:42:58.081000" or "13:42" -> "1:42 PM" */
 function formatTimeFriendly(time) {
-  if (!time) return '';
-  const [hStr, mStr] = String(time).split(':');
+  if (!time) return "";
+  const [hStr, mStr] = String(time).split(":");
   const h = Number(hStr);
   const m = Number(mStr);
   if (Number.isNaN(h) || Number.isNaN(m)) return time;
-  const period = h >= 12 ? 'PM' : 'AM';
+  const period = h >= 12 ? "PM" : "AM";
   const h12 = h % 12 === 0 ? 12 : h % 12;
-  return `${h12}:${String(m).padStart(2, '0')} ${period}`;
+  return `${h12}:${String(m).padStart(2, "0")} ${period}`;
 }
 
-/** "10000.00" -> "₦10,000" (drops decimals when .00) */
 function formatNaira(amount) {
   const n = Number(amount);
-  if (Number.isNaN(n)) return '₦—';
+  if (Number.isNaN(n)) return "₦—";
   const hasFraction = Math.round(n * 100) % 100 !== 0;
-  return new Intl.NumberFormat('en-NG', {
-    style: 'currency',
-    currency: 'NGN',
+  return new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
     minimumFractionDigits: hasFraction ? 2 : 0,
     maximumFractionDigits: 2,
   }).format(n);
@@ -88,29 +89,29 @@ function formatNaira(amount) {
 
 function seatsLabel(n) {
   const num = Number(n);
-  if (Number.isNaN(num)) return '';
-  if (num <= 0) return 'Full';
-  return `${num} seat${num === 1 ? '' : 's'} left`;
+  if (Number.isNaN(num)) return "";
+  if (num <= 0) return "Full";
+  return `${num} seat${num === 1 ? "" : "s"} left`;
 }
 
 function carLabel(car) {
-  if (!car) return '';
+  if (!car) return "";
   const parts = [car.make, car.model].filter(Boolean);
-  const label = parts.join(' ');
+  const label = parts.join(" ");
   return car.year ? `${label} · ${car.year}` : label;
 }
 
 function activeAmenities(car) {
   if (!car) return [];
-  return AMENITY_FILTERS
-    .filter((f) => car[f.key] === true)
-    .map((f) => AMENITY_LABELS[f.key]);
+  return AMENITY_FILTERS.filter((f) => car[f.key] === true).map(
+    (f) => AMENITY_LABELS[f.key],
+  );
 }
 
 function stopoverLabel(stopovers) {
   if (!Array.isArray(stopovers) || stopovers.length === 0) return null;
   if (stopovers.length === 1) {
-    return stopovers[0].location ? `Via ${stopovers[0].location}` : '1 stop';
+    return stopovers[0].location ? `Via ${stopovers[0].location}` : "1 stop";
   }
   return `${stopovers.length} stops`;
 }
@@ -122,61 +123,132 @@ function stopoverLabel(stopovers) {
 const Icon = {
   Pin: (p) => (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" {...p}>
-      <path d="M12 21s-6.5-5.4-6.5-10.5A6.5 6.5 0 0 1 18.5 10.5C18.5 15.6 12 21 12 21Z"
-        stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
-      <circle cx="12" cy="10.5" r="2.4" stroke="currentColor" strokeWidth="1.7" />
+      <path
+        d="M12 21s-6.5-5.4-6.5-10.5A6.5 6.5 0 0 1 18.5 10.5C18.5 15.6 12 21 12 21Z"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinejoin="round"
+      />
+      <circle
+        cx="12"
+        cy="10.5"
+        r="2.4"
+        stroke="currentColor"
+        strokeWidth="1.7"
+      />
     </svg>
   ),
   Flag: (p) => (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" {...p}>
-      <path d="M6 21V4M6 4h10l-1.4 3.5L16 11H6" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" strokeLinecap="round" />
+      <path
+        d="M6 21V4M6 4h10l-1.4 3.5L16 11H6"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
     </svg>
   ),
   Calendar: (p) => (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" {...p}>
-      <rect x="3.5" y="5" width="17" height="15" rx="2.5" stroke="currentColor" strokeWidth="1.7" />
-      <path d="M3.5 9.5h17M8 3.5v3M16 3.5v3" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+      <rect
+        x="3.5"
+        y="5"
+        width="17"
+        height="15"
+        rx="2.5"
+        stroke="currentColor"
+        strokeWidth="1.7"
+      />
+      <path
+        d="M3.5 9.5h17M8 3.5v3M16 3.5v3"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+      />
     </svg>
   ),
   User: (p) => (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" {...p}>
-      <circle cx="12" cy="8.5" r="3.3" stroke="currentColor" strokeWidth="1.7" />
-      <path d="M5 20c.9-3.4 3.6-5.2 7-5.2s6.1 1.8 7 5.2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+      <circle
+        cx="12"
+        cy="8.5"
+        r="3.3"
+        stroke="currentColor"
+        strokeWidth="1.7"
+      />
+      <path
+        d="M5 20c.9-3.4 3.6-5.2 7-5.2s6.1 1.8 7 5.2"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+      />
     </svg>
   ),
   Swap: (p) => (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" {...p}>
-      <path d="M7 4v16M7 20l-3.5-3.5M7 20l3.5-3.5M17 20V4M17 4l-3.5 3.5M17 4l3.5 3.5"
-        stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M7 4v16M7 20l-3.5-3.5M7 20l3.5-3.5M17 20V4M17 4l-3.5 3.5M17 4l3.5 3.5"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   ),
   Search: (p) => (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" {...p}>
       <circle cx="11" cy="11" r="6.5" stroke="currentColor" strokeWidth="1.9" />
-      <path d="m20 20-3.6-3.6" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+      <path
+        d="m20 20-3.6-3.6"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+      />
     </svg>
   ),
   Sliders: (p) => (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" {...p}>
-      <path d="M4 7h10M18 7h2M4 17h4M12 17h8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path
+        d="M4 7h10M18 7h2M4 17h4M12 17h8"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
       <circle cx="16" cy="7" r="2" stroke="currentColor" strokeWidth="1.8" />
       <circle cx="10" cy="17" r="2" stroke="currentColor" strokeWidth="1.8" />
     </svg>
   ),
   Arrow: (p) => (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" {...p}>
-      <path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M5 12h13M13 6l6 6-6 6"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   ),
   Close: (p) => (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" {...p}>
-      <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path
+        d="M6 6l12 12M18 6 6 18"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
     </svg>
   ),
   Alert: (p) => (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" {...p}>
       <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.7" />
-      <path d="M12 7.5v6M12 16.6v.2" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+      <path
+        d="M12 7.5v6M12 16.6v.2"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+      />
     </svg>
   ),
   Bolt: (p) => (
@@ -186,16 +258,28 @@ const Icon = {
   ),
   Seat: (p) => (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" {...p}>
-      <path d="M6 4v10a3 3 0 0 0 3 3h6M18 20v-4a2 2 0 0 0-2-2H9"
-        stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+      <path
+        d="M6 4v10a3 3 0 0 0 3 3h6M18 20v-4a2 2 0 0 0-2-2H9"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+      />
     </svg>
   ),
   Car: (p) => (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" {...p}>
-      <path d="M4 15v-2.2l1.4-3.9A2 2 0 0 1 7.3 7.5h9.4a2 2 0 0 1 1.9 1.4L20 12.8V15"
-        stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
-      <path d="M3.5 15h17v3.2a1 1 0 0 1-1 1h-1.6a1 1 0 0 1-1-1V18H7.1v.2a1 1 0 0 1-1 1H4.5a1 1 0 0 1-1-1V15Z"
-        stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+      <path
+        d="M4 15v-2.2l1.4-3.9A2 2 0 0 1 7.3 7.5h9.4a2 2 0 0 1 1.9 1.4L20 12.8V15"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M3.5 15h17v3.2a1 1 0 0 1-1 1h-1.6a1 1 0 0 1-1-1V18H7.1v.2a1 1 0 0 1-1 1H4.5a1 1 0 0 1-1-1V15Z"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinejoin="round"
+      />
       <circle cx="7.5" cy="15" r=".9" fill="currentColor" />
       <circle cx="16.5" cy="15" r=".9" fill="currentColor" />
     </svg>
@@ -217,10 +301,12 @@ function PassengerStepper({ value, onChange, min = 1, max = 8 }) {
         onClick={dec}
         disabled={value <= min}
         aria-label="Decrease passengers"
-      >−</button>
+      >
+        −
+      </button>
       <span className="rs_stepper_value" aria-live="polite">
         {value}
-        <small>{value === 1 ? 'passenger' : 'passengers'}</small>
+        <small>{value === 1 ? "passenger" : "passengers"}</small>
       </span>
       <button
         type="button"
@@ -228,7 +314,9 @@ function PassengerStepper({ value, onChange, min = 1, max = 8 }) {
         onClick={inc}
         disabled={value >= max}
         aria-label="Increase passengers"
-      >+</button>
+      >
+        +
+      </button>
     </div>
   );
 }
@@ -267,7 +355,10 @@ function RideCard({ ride, onSelect }) {
   const isFull = Number(seats) <= 0;
 
   return (
-    <article className="rs_card" aria-label={`Ride from ${ride.pickup_location} to ${ride.dropoff_location}`}>
+    <article
+      className="rs_card"
+      aria-label={`Ride from ${ride.pickup_location} to ${ride.dropoff_location}`}
+    >
       <header className="rs_card_top">
         <div className="rs_time_block">
           <span className="rs_time">{time}</span>
@@ -290,9 +381,7 @@ function RideCard({ ride, onSelect }) {
             <span className="rs_route_label">{ride.pickup_location}</span>
             <span className="rs_route_sub">Pickup</span>
           </div>
-          {stopLabel && (
-            <div className="rs_route_stop">{stopLabel}</div>
-          )}
+          {stopLabel && <div className="rs_route_stop">{stopLabel}</div>}
           <div className="rs_route_point">
             <span className="rs_route_label">{ride.dropoff_location}</span>
             <span className="rs_route_sub">Drop-off</span>
@@ -318,14 +407,16 @@ function RideCard({ ride, onSelect }) {
 
       <div className="rs_card_footer">
         <div className="rs_footer_left">
-          <span className={`rs_seats ${isFull ? 'full' : ''}`}>
+          <span className={`rs_seats ${isFull ? "full" : ""}`}>
             <Icon.Seat aria-hidden="true" />
             {seatsLabel(seats)}
           </span>
           {amenities.length > 0 && (
             <span className="rs_amenities">
               {amenities.map((a) => (
-                <span key={a} className="rs_amenity">{a}</span>
+                <span key={a} className="rs_amenity">
+                  {a}
+                </span>
               ))}
             </span>
           )}
@@ -337,7 +428,7 @@ function RideCard({ ride, onSelect }) {
           disabled={isFull}
           aria-label={`View ride from ${ride.pickup_location} to ${ride.dropoff_location}`}
         >
-          {isFull ? 'Full' : 'View ride'}
+          {isFull ? "Full" : "View ride"}
           {!isFull && <Icon.Arrow aria-hidden="true" />}
         </button>
       </div>
@@ -358,12 +449,14 @@ function FiltersDrawer({ open, value, onClose, onApply, onClear }) {
 
   useEffect(() => {
     if (!open) return;
-    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
-    document.addEventListener('keydown', onKey);
+    const onKey = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
     const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow = "hidden";
     return () => {
-      document.removeEventListener('keydown', onKey);
+      document.removeEventListener("keydown", onKey);
       document.body.style.overflow = prev;
     };
   }, [open, onClose]);
@@ -374,19 +467,31 @@ function FiltersDrawer({ open, value, onClose, onApply, onClear }) {
     setDraft((d) => ({ ...d, [key]: e.target.checked }));
 
   return (
-    <div className="rs_drawer_root" role="dialog" aria-modal="true" aria-label="Ride filters">
+    <div
+      className="rs_drawer_root"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Ride filters"
+    >
       <div className="rs_drawer_scrim" onClick={onClose} />
       <aside className="rs_drawer">
         <header className="rs_drawer_head">
           <h2>Filters</h2>
-          <button type="button" className="rs_icon_btn" onClick={onClose} aria-label="Close filters">
+          <button
+            type="button"
+            className="rs_icon_btn"
+            onClick={onClose}
+            aria-label="Close filters"
+          >
             <Icon.Close />
           </button>
         </header>
 
         <div className="rs_drawer_body">
           <div className="rs_field">
-            <label className="rs_field_label" htmlFor="rs_max_price">Maximum price (₦)</label>
+            <label className="rs_field_label" htmlFor="rs_max_price">
+              Maximum price (₦)
+            </label>
             <input
               id="rs_max_price"
               className="rs_input"
@@ -396,42 +501,56 @@ function FiltersDrawer({ open, value, onClose, onApply, onClear }) {
               inputMode="numeric"
               placeholder="e.g. 15000"
               value={draft.max_price}
-              onChange={(e) => setDraft((d) => ({ ...d, max_price: e.target.value }))}
+              onChange={(e) =>
+                setDraft((d) => ({ ...d, max_price: e.target.value }))
+              }
             />
           </div>
 
           <div className="rs_field_row">
             <div className="rs_field">
-              <label className="rs_field_label" htmlFor="rs_time_from">Pickup from</label>
+              <label className="rs_field_label" htmlFor="rs_time_from">
+                Pickup from
+              </label>
               <input
                 id="rs_time_from"
                 className="rs_input"
                 type="time"
                 value={draft.pickup_time_from}
-                onChange={(e) => setDraft((d) => ({ ...d, pickup_time_from: e.target.value }))}
+                onChange={(e) =>
+                  setDraft((d) => ({ ...d, pickup_time_from: e.target.value }))
+                }
               />
             </div>
             <div className="rs_field">
-              <label className="rs_field_label" htmlFor="rs_time_to">Pickup until</label>
+              <label className="rs_field_label" htmlFor="rs_time_to">
+                Pickup until
+              </label>
               <input
                 id="rs_time_to"
                 className="rs_input"
                 type="time"
                 value={draft.pickup_time_to}
-                onChange={(e) => setDraft((d) => ({ ...d, pickup_time_to: e.target.value }))}
+                onChange={(e) =>
+                  setDraft((d) => ({ ...d, pickup_time_to: e.target.value }))
+                }
               />
             </div>
           </div>
 
           <div className="rs_field">
-            <label className="rs_field_label" htmlFor="rs_car_make">Car make</label>
+            <label className="rs_field_label" htmlFor="rs_car_make">
+              Car make
+            </label>
             <input
               id="rs_car_make"
               className="rs_input"
               type="text"
               placeholder="e.g. Toyota"
               value={draft.car_make}
-              onChange={(e) => setDraft((d) => ({ ...d, car_make: e.target.value }))}
+              onChange={(e) =>
+                setDraft((d) => ({ ...d, car_make: e.target.value }))
+              }
             />
           </div>
 
@@ -452,7 +571,12 @@ function FiltersDrawer({ open, value, onClose, onApply, onClear }) {
                 <input
                   type="checkbox"
                   checked={!!draft.instant_booking}
-                  onChange={(e) => setDraft((d) => ({ ...d, instant_booking: e.target.checked }))}
+                  onChange={(e) =>
+                    setDraft((d) => ({
+                      ...d,
+                      instant_booking: e.target.checked,
+                    }))
+                  }
                 />
                 <span>Instant booking only</span>
               </label>
@@ -461,10 +585,18 @@ function FiltersDrawer({ open, value, onClose, onApply, onClear }) {
         </div>
 
         <footer className="rs_drawer_foot">
-          <button type="button" className="rs_btn ghost" onClick={() => onClear()}>
+          <button
+            type="button"
+            className="rs_btn ghost"
+            onClick={() => onClear()}
+          >
             Clear all
           </button>
-          <button type="button" className="rs_btn primary" onClick={() => onApply(draft)}>
+          <button
+            type="button"
+            className="rs_btn primary"
+            onClick={() => onApply(draft)}
+          >
             Apply filters
           </button>
         </footer>
@@ -478,10 +610,10 @@ function FiltersDrawer({ open, value, onClose, onApply, onClear }) {
  * ------------------------------------------------------------------ */
 
 const EMPTY_FILTERS = {
-  max_price: '',
-  pickup_time_from: '',
-  pickup_time_to: '',
-  car_make: '',
+  max_price: "",
+  pickup_time_from: "",
+  pickup_time_to: "",
+  car_make: "",
   instant_booking: false,
   has_wifi: false,
   has_air_conditioning: false,
@@ -492,112 +624,156 @@ const EMPTY_FILTERS = {
 };
 
 const SearchRide = () => {
-  // Search form. `date` starts EMPTY on purpose — the API treats a missing
-  // departure_date as "every occurrence from today onward", which is the
-  // behaviour most users want on first load.
-  const [from, setFrom] = useState('');
-  const [to, setTo] = useState('');
-  const [date, setDate] = useState('');
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [date, setDate] = useState("");
   const [passengers, setPassengers] = useState(1);
-
-  // Filters + sort
+  const navigate = useNavigate();
   const [filters, setFilters] = useState(EMPTY_FILTERS);
-  const [sortBy, setSortBy] = useState('');
+  const [sortBy, setSortBy] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  // Results
   const [rides, setRides] = useState(null);
-  const [status, setStatus] = useState('idle'); // idle | loading | success | error
-  const [errorMsg, setErrorMsg] = useState('');
+  const [status, setStatus] = useState("idle"); // idle | loading | success | error
+  const [errorMsg, setErrorMsg] = useState("");
   const [submitted, setSubmitted] = useState(null);
+
+  // Pagination
+  const [page, setPage] = useState(1);
+  const [meta, setMeta] = useState({
+    total: 0,
+    page: 1,
+    total_pages: 1,
+    limit: PAGE_SIZE,
+  });
 
   const abortRef = useRef(null);
 
-  const buildParams = useCallback((query, f, sort) => {
+  const buildParams = useCallback((query, f, sort, pageNum = 1) => {
     const params = new URLSearchParams();
 
-    // Only send from/to when the user actually provided a value.
-    if (query.from) params.set('from', query.from);
-    if (query.to) params.set('to', query.to);
+    if (query.from) params.set("from", query.from);
+    if (query.to) params.set("to", query.to);
+    if (query.date) params.set("departure_date", query.date);
 
-    // CRITICAL: only send departure_date if the user picked one. Sending
-    // today's date silently excludes rides that only exist on future dates.
-    if (query.date) params.set('departure_date', query.date);
+    params.set("passengers", String(query.passengers));
 
-    params.set('passengers', String(query.passengers));
-
-    if (f.max_price !== '' && f.max_price != null) params.set('max_price', String(f.max_price));
-    if (f.pickup_time_from) params.set('pickup_time_from', f.pickup_time_from);
-    if (f.pickup_time_to) params.set('pickup_time_to', f.pickup_time_to);
-    if (f.car_make) params.set('car_make', f.car_make);
-    if (f.instant_booking) params.set('instant_booking', 'true');
+    if (f.max_price !== "" && f.max_price != null)
+      params.set("max_price", String(f.max_price));
+    if (f.pickup_time_from) params.set("pickup_time_from", f.pickup_time_from);
+    if (f.pickup_time_to) params.set("pickup_time_to", f.pickup_time_to);
+    if (f.car_make) params.set("car_make", f.car_make);
+    if (f.instant_booking) params.set("instant_booking", "true");
 
     AMENITY_FILTERS.forEach(({ key }) => {
-      if (f[key]) params.set(key, 'true');
+      if (f[key]) params.set(key, "true");
     });
 
-    if (sort) params.set('sort_by', sort);
+    if (sort) params.set("sort_by", sort);
+
+    params.set("page", String(pageNum));
+    params.set("limit", String(PAGE_SIZE));
 
     return params;
   }, []);
 
-  const runSearch = useCallback(async (query, f, sort) => {
-    if (abortRef.current) abortRef.current.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
+  const runSearch = useCallback(
+    async (query, f, sort, pageNum = 1) => {
+      if (abortRef.current) abortRef.current.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
 
-    setStatus('loading');
-    setErrorMsg('');
+      setStatus("loading");
+      setErrorMsg("");
 
-    try {
-      const params = buildParams(query, f, sort);
-      const url = `${SEARCH_ENDPOINT}?${params.toString()}`;
+      try {
+        const params = buildParams(query, f, sort, pageNum);
+        const url = `${SEARCH_ENDPOINT}?${params.toString()}`;
 
-      // Helpful while debugging:
-      // eslint-disable-next-line no-console
-      console.log('[ride search] GET', url);
+        // eslint-disable-next-line no-console
+        console.log("[ride search] GET", url);
 
-      const res = await fetch(url, {
-        method: 'GET',
-        headers: { accept: 'application/json' },
-        signal: controller.signal,
-      });
+        const res = await fetch(url, {
+          method: "GET",
+          headers: { accept: "application/json" },
+          signal: controller.signal,
+        });
 
-      if (!res.ok) {
-        let detail = '';
-        try {
-          const body = await res.json();
-          if (body && Array.isArray(body.detail)) {
-            detail = body.detail.map((d) => `${d.loc?.join('.')}: ${d.msg}`).join('; ');
-          } else if (body && typeof body.detail === 'string') {
-            detail = body.detail;
+        if (!res.ok) {
+          let detail = "";
+          try {
+            const body = await res.json();
+            if (body && Array.isArray(body.detail)) {
+              detail = body.detail
+                .map((d) => `${d.loc?.join(".")}: ${d.msg}`)
+                .join("; ");
+            } else if (body && typeof body.detail === "string") {
+              detail = body.detail;
+            }
+          } catch {
+            /* ignore */
           }
-        } catch { /* ignore */ }
-        throw new Error(detail || `Request failed with ${res.status}`);
-      }
+          throw new Error(detail || `Request failed with ${res.status}`);
+        }
 
-      const data = await res.json();
-      setRides(Array.isArray(data) ? data : []);
-      setStatus('success');
-    } catch (err) {
-      if (err.name === 'AbortError') return;
-      // eslint-disable-next-line no-console
-      console.error('[ride search] failed:', err);
-      setStatus('error');
-      setErrorMsg('Something went wrong while searching. Please try again.');
-    }
-  }, [buildParams]);
+        const data = await res.json();
+        // eslint-disable-next-line no-console
+        console.log("[ride search] raw response:", data);
+
+        // API returns { items, total, page, limit, total_pages }
+        // Fall back to a plain array if the backend ever changes shape.
+        let items = [];
+        let nextMeta = {
+          total: 0,
+          page: pageNum,
+          total_pages: 1,
+          limit: PAGE_SIZE,
+        };
+
+        if (Array.isArray(data)) {
+          items = data;
+          nextMeta = {
+            total: data.length,
+            page: pageNum,
+            total_pages: 1,
+            limit: PAGE_SIZE,
+          };
+        } else if (data && Array.isArray(data.items)) {
+          items = data.items;
+          nextMeta = {
+            total: Number(data.total) || items.length,
+            page: Number(data.page) || pageNum,
+            total_pages: Number(data.total_pages) || 1,
+            limit: Number(data.limit) || PAGE_SIZE,
+          };
+        }
+
+        setRides(items);
+        setMeta(nextMeta);
+        setPage(nextMeta.page);
+        setStatus("success");
+      } catch (err) {
+        if (err.name === "AbortError") return;
+        // eslint-disable-next-line no-console
+        console.error("[ride search] failed:", err);
+        setStatus("error");
+        setErrorMsg("Something went wrong while searching. Please try again.");
+      }
+    },
+    [buildParams],
+  );
 
   const handleSubmit = (e) => {
     e.preventDefault();
     const query = {
       from: from.trim(),
       to: to.trim(),
-      date,           // may be '' — that's fine, we simply skip the param
+      date,
       passengers,
     };
     setSubmitted(query);
-    runSearch(query, filters, sortBy);
+    setPage(1);
+    runSearch(query, filters, sortBy, 1);
   };
 
   const handleSwap = () => {
@@ -608,25 +784,36 @@ const SearchRide = () => {
   const handleApplyFilters = (next) => {
     setFilters(next);
     setFiltersOpen(false);
-    if (submitted) runSearch(submitted, next, sortBy);
+    setPage(1);
+    if (submitted) runSearch(submitted, next, sortBy, 1);
   };
 
   const handleClearFilters = () => {
     setFilters(EMPTY_FILTERS);
-    setSortBy('');
+    setSortBy("");
     setFiltersOpen(false);
-    if (submitted) runSearch(submitted, EMPTY_FILTERS, '');
+    setPage(1);
+    if (submitted) runSearch(submitted, EMPTY_FILTERS, "", 1);
   };
 
   const handleSortChange = (e) => {
     const next = e.target.value;
     setSortBy(next);
-    if (submitted) runSearch(submitted, filters, next);
+    setPage(1);
+    if (submitted) runSearch(submitted, filters, next, 1);
+  };
+
+  const handlePageChange = (nextPage) => {
+    if (!submitted) return;
+    const bounded = Math.max(1, Math.min(nextPage, meta.total_pages || 1));
+    if (bounded === page) return;
+    runSearch(submitted, filters, sortBy, bounded);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleAdjustSearch = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    const el = document.getElementById('rs_from_input');
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    const el = document.getElementById("rs_from_input");
     if (el) setTimeout(() => el.focus(), 250);
   };
 
@@ -637,20 +824,40 @@ const SearchRide = () => {
     if (filters.pickup_time_to) n++;
     if (filters.car_make) n++;
     if (filters.instant_booking) n++;
-    AMENITY_FILTERS.forEach(({ key }) => { if (filters[key]) n++; });
+    AMENITY_FILTERS.forEach(({ key }) => {
+      if (filters[key]) n++;
+    });
     return n;
   }, [filters]);
 
-  const isSearching = status === 'loading';
+  const isSearching = status === "loading";
   const today = todayISO();
 
   const datePart = submitted?.date
     ? formatDateFriendly(submitted.date)
-    : 'Any date';
+    : "Any date";
 
   const summary = submitted
-    ? `${submitted.from || 'Anywhere'} → ${submitted.to || 'Anywhere'} · ${datePart} · ${submitted.passengers} ${submitted.passengers === 1 ? 'passenger' : 'passengers'}`
-    : '';
+    ? `${submitted.from || "Anywhere"} → ${submitted.to || "Anywhere"} · ${datePart} · ${submitted.passengers} ${submitted.passengers === 1 ? "passenger" : "passengers"}`
+    : "";
+
+  const showPagination =
+    status === "success" &&
+    rides &&
+    rides.length > 0 &&
+    (meta.total_pages || 1) > 1;
+
+  const pageWindow = useMemo(() => {
+    const total = meta.total_pages || 1;
+    const current = meta.page || 1;
+    const windowSize = 5;
+    let start = Math.max(1, current - Math.floor(windowSize / 2));
+    let end = Math.min(total, start + windowSize - 1);
+    start = Math.max(1, end - windowSize + 1);
+    const out = [];
+    for (let p = start; p <= end; p++) out.push(p);
+    return out;
+  }, [meta.total_pages, meta.page]);
 
   return (
     <div className="ride_search_page">
@@ -660,15 +867,23 @@ const SearchRide = () => {
           <p className="rs_eyebrow">Find a ride</p>
           <h1 className="rs_title">Where are you headed?</h1>
           <p className="rs_subtitle">
-            Search seats on rides leaving across Nigeria. Book a seat in seconds.
+            Search seats on rides leaving across Nigeria. Book a seat in
+            seconds.
           </p>
 
-          <form className="rs_search" onSubmit={handleSubmit} aria-label="Ride search">
+          <form
+            className="rs_search"
+            onSubmit={handleSubmit}
+            aria-label="Ride search"
+          >
             <div className="rs_search_grid">
-              {/* From */}
               <div className="rs_search_field">
-                <span className="rs_search_icon" aria-hidden="true"><Icon.Pin /></span>
-                <label className="rs_search_label" htmlFor="rs_from_input">From</label>
+                <span className="rs_search_icon" aria-hidden="true">
+                  <Icon.Pin />
+                </span>
+                <label className="rs_search_label" htmlFor="rs_from_input">
+                  From
+                </label>
                 <input
                   id="rs_from_input"
                   className="rs_search_input"
@@ -680,7 +895,6 @@ const SearchRide = () => {
                 />
               </div>
 
-              {/* Swap */}
               <button
                 type="button"
                 className="rs_swap_btn"
@@ -691,10 +905,13 @@ const SearchRide = () => {
                 <Icon.Swap />
               </button>
 
-              {/* To */}
               <div className="rs_search_field">
-                <span className="rs_search_icon" aria-hidden="true"><Icon.Flag /></span>
-                <label className="rs_search_label" htmlFor="rs_to_input">To</label>
+                <span className="rs_search_icon" aria-hidden="true">
+                  <Icon.Flag />
+                </span>
+                <label className="rs_search_label" htmlFor="rs_to_input">
+                  To
+                </label>
                 <input
                   id="rs_to_input"
                   className="rs_search_input"
@@ -706,10 +923,13 @@ const SearchRide = () => {
                 />
               </div>
 
-              {/* Date — empty by default = "any date" */}
               <div className="rs_search_field">
-                <span className="rs_search_icon" aria-hidden="true"><Icon.Calendar /></span>
-                <label className="rs_search_label" htmlFor="rs_date_input">Departure</label>
+                <span className="rs_search_icon" aria-hidden="true">
+                  <Icon.Calendar />
+                </span>
+                <label className="rs_search_label" htmlFor="rs_date_input">
+                  Departure
+                </label>
                 <input
                   id="rs_date_input"
                   className="rs_search_input"
@@ -721,14 +941,19 @@ const SearchRide = () => {
                 />
               </div>
 
-              {/* Passengers */}
               <div className="rs_search_field rs_search_passengers">
-                <span className="rs_search_icon" aria-hidden="true"><Icon.User /></span>
+                <span className="rs_search_icon" aria-hidden="true">
+                  <Icon.User />
+                </span>
                 <span className="rs_search_label">Passengers</span>
-                <PassengerStepper value={passengers} onChange={setPassengers} min={1} max={8} />
+                <PassengerStepper
+                  value={passengers}
+                  onChange={setPassengers}
+                  min={1}
+                  max={8}
+                />
               </div>
 
-              {/* Submit */}
               <button
                 type="submit"
                 className="rs_search_submit"
@@ -759,11 +984,14 @@ const SearchRide = () => {
             <header className="rs_results_head">
               <div className="rs_summary">
                 <h2 className="rs_summary_title">
-                  {submitted.from || 'Anywhere'} → {submitted.to || 'Anywhere'}
+                  {submitted.from || "Anywhere"} → {submitted.to || "Anywhere"}
                 </h2>
                 <p className="rs_summary_meta">
-                  {datePart} · {submitted.passengers} {submitted.passengers === 1 ? 'passenger' : 'passengers'}
-                  {status === 'success' && rides ? ` · ${rides.length} ${rides.length === 1 ? 'ride' : 'rides'}` : ''}
+                  {datePart} · {submitted.passengers}{" "}
+                  {submitted.passengers === 1 ? "passenger" : "passengers"}
+                  {status === "success" && meta.total > 0
+                    ? ` · ${meta.total} ${meta.total === 1 ? "ride" : "rides"}`
+                    : ""}
                 </p>
               </div>
 
@@ -777,14 +1005,19 @@ const SearchRide = () => {
                   <Icon.Sliders aria-hidden="true" />
                   Filters
                   {activeFilterCount > 0 && (
-                    <span className="rs_count" aria-label={`${activeFilterCount} active filters`}>
+                    <span
+                      className="rs_count"
+                      aria-label={`${activeFilterCount} active filters`}
+                    >
                       {activeFilterCount}
                     </span>
                   )}
                 </button>
 
                 <div className="rs_sort">
-                  <label htmlFor="rs_sort_select" className="rs_sort_label">Sort</label>
+                  <label htmlFor="rs_sort_select" className="rs_sort_label">
+                    Sort
+                  </label>
                   <select
                     id="rs_sort_select"
                     className="rs_sort_select"
@@ -792,18 +1025,24 @@ const SearchRide = () => {
                     onChange={handleSortChange}
                   >
                     {SORT_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>{o.label}</option>
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
                     ))}
                   </select>
                 </div>
 
-                <button type="button" className="rs_btn ghost" onClick={handleAdjustSearch}>
+                <button
+                  type="button"
+                  className="rs_btn ghost"
+                  onClick={handleAdjustSearch}
+                >
                   Edit search
                 </button>
               </div>
             </header>
 
-            {status === 'loading' && (
+            {status === "loading" && (
               <div className="rs_list" aria-busy="true">
                 <SkeletonCard />
                 <SkeletonCard />
@@ -811,30 +1050,41 @@ const SearchRide = () => {
               </div>
             )}
 
-            {status === 'error' && (
+            {status === "error" && (
               <div className="rs_state" role="alert">
-                <div className="rs_state_icon error"><Icon.Alert /></div>
-                <h3 className="rs_state_title">We couldn&apos;t load those rides</h3>
+                <div className="rs_state_icon error">
+                  <Icon.Alert />
+                </div>
+                <h3 className="rs_state_title">
+                  We couldn&apos;t load those rides
+                </h3>
                 <p className="rs_state_copy">{errorMsg}</p>
                 <button
                   type="button"
                   className="rs_btn primary"
-                  onClick={() => runSearch(submitted, filters, sortBy)}
+                  onClick={() => runSearch(submitted, filters, sortBy, page)}
                 >
                   Try again
                 </button>
               </div>
             )}
 
-            {status === 'success' && rides && rides.length === 0 && (
+            {status === "success" && rides && rides.length === 0 && (
               <div className="rs_state">
-                <div className="rs_state_icon"><Icon.Search /></div>
+                <div className="rs_state_icon">
+                  <Icon.Search />
+                </div>
                 <h3 className="rs_state_title">No rides found</h3>
                 <p className="rs_state_copy">
-                  We couldn&apos;t find a ride matching your search. Try changing your date, route, or filters.
+                  We couldn&apos;t find a ride matching your search. Try
+                  changing your date, route, or filters.
                 </p>
                 <div className="rs_state_actions">
-                  <button type="button" className="rs_btn primary" onClick={handleAdjustSearch}>
+                  <button
+                    type="button"
+                    className="rs_btn primary"
+                    onClick={handleAdjustSearch}
+                  >
                     Adjust search
                   </button>
                   {(activeFilterCount > 0 || submitted?.date) && (
@@ -842,13 +1092,13 @@ const SearchRide = () => {
                       type="button"
                       className="rs_btn ghost"
                       onClick={() => {
-                        // Clear both the date filter and the filter drawer
-                        setDate('');
+                        setDate("");
                         setFilters(EMPTY_FILTERS);
-                        setSortBy('');
-                        const next = { ...submitted, date: '' };
+                        setSortBy("");
+                        const next = { ...submitted, date: "" };
                         setSubmitted(next);
-                        runSearch(next, EMPTY_FILTERS, '');
+                        setPage(1);
+                        runSearch(next, EMPTY_FILTERS, "", 1);
                       }}
                     >
                       Any date, no filters
@@ -858,21 +1108,97 @@ const SearchRide = () => {
               </div>
             )}
 
-            {status === 'success' && rides && rides.length > 0 && (
-              <div className="rs_list">
-                {rides.map((ride, idx) => (
-                  <RideCard
-                    key={`${ride.id}-${ride.searched_date}-${idx}`}
-                    ride={ride}
-                    onSelect={(r) => {
-                      // Wire this to your existing booking/ride-detail route.
-                      // Example: navigate(`/rides/${r.id}?date=${r.searched_date}`);
-                      // eslint-disable-next-line no-console
-                      console.info('Selected ride:', r.id, 'on', r.searched_date);
-                    }}
-                  />
-                ))}
-              </div>
+            {status === "success" && rides && rides.length > 0 && (
+              <>
+                <div className="rs_list">
+                  {rides.map((ride, idx) => (
+                    <RideCard
+                      key={`${ride.id}-${ride.searched_date}-${idx}`}
+                      ride={ride}
+                      onSelect={(r) =>
+                        navigate(`/rides/${r.id}`, {
+                          state: { date: r.searched_date },
+                        })
+                      }
+                    />
+                  ))}
+                </div>
+
+                {showPagination && (
+                  <nav
+                    className="rs_pagination"
+                    aria-label="Search results pages"
+                  >
+                    <button
+                      type="button"
+                      className="rs_page_btn"
+                      onClick={() => handlePageChange(page - 1)}
+                      disabled={page <= 1}
+                      aria-label="Previous page"
+                    >
+                      Prev
+                    </button>
+
+                    {pageWindow[0] > 1 && (
+                      <>
+                        <button
+                          type="button"
+                          className="rs_page_btn"
+                          onClick={() => handlePageChange(1)}
+                        >
+                          1
+                        </button>
+                        {pageWindow[0] > 2 && (
+                          <span className="rs_page_ellipsis" aria-hidden="true">
+                            …
+                          </span>
+                        )}
+                      </>
+                    )}
+
+                    {pageWindow.map((p) => (
+                      <button
+                        key={p}
+                        type="button"
+                        className={`rs_page_btn${p === page ? " active" : ""}`}
+                        onClick={() => handlePageChange(p)}
+                        aria-current={p === page ? "page" : undefined}
+                      >
+                        {p}
+                      </button>
+                    ))}
+
+                    {pageWindow[pageWindow.length - 1] <
+                      (meta.total_pages || 1) && (
+                      <>
+                        {pageWindow[pageWindow.length - 1] <
+                          (meta.total_pages || 1) - 1 && (
+                          <span className="rs_page_ellipsis" aria-hidden="true">
+                            …
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          className="rs_page_btn"
+                          onClick={() => handlePageChange(meta.total_pages)}
+                        >
+                          {meta.total_pages}
+                        </button>
+                      </>
+                    )}
+
+                    <button
+                      type="button"
+                      className="rs_page_btn"
+                      onClick={() => handlePageChange(page + 1)}
+                      disabled={page >= (meta.total_pages || 1)}
+                      aria-label="Next page"
+                    >
+                      Next
+                    </button>
+                  </nav>
+                )}
+              </>
             )}
           </div>
         </section>

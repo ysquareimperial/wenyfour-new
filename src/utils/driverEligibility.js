@@ -27,25 +27,40 @@ export function getDriverEligibility(user) {
     user.nin_verification_status === "verified" || user.nin_verified === true;
 
   const driverProfile = user.driver_profile || null;
-
+  const licenseVerified =
+    driverProfile?.license_verification_status === "verified";
   const hasLicenseNumber = !!driverProfile?.license_number;
   const hasLicenseExpiry = !!driverProfile?.license_expiry_date;
   const hasLicensePhoto = !!driverProfile?.license_photo_url;
-  const hasLicense = hasLicenseNumber && hasLicenseExpiry && hasLicensePhoto;
+
+  const hasLicense =
+    licenseVerified ||
+    (hasLicenseNumber && hasLicenseExpiry && hasLicensePhoto);
 
   const isDriver = user.is_driver === true;
 
-  if (!ninVerified) {
-    reasons.push("Your NIN needs to be verified.");
+  // 🚀 Fast path: trust the backend's computed flag
+  const backendApproves =
+    user.can_offer_rides === true &&
+    user.is_driver === true &&
+    ninVerified;
+
+  if (backendApproves) {
+    return {
+      eligible: true,
+      reasons: [],
+      ninVerified,
+      hasLicense,
+      isDriver,
+      missingNin: false,
+      missingLicense: false,
+      notDriver: false,
+    };
   }
 
-  if (!hasLicense) {
-    reasons.push("Your driver's licence information is incomplete.");
-  }
-
-  if (!isDriver) {
-    reasons.push("Your driver account is not yet active.");
-  }
+  if (!ninVerified) reasons.push("Your NIN needs to be verified.");
+  if (!hasLicense) reasons.push("Your driver's licence information is incomplete.");
+  if (!isDriver) reasons.push("Your driver account is not yet active.");
 
   return {
     eligible: ninVerified && hasLicense && isDriver,

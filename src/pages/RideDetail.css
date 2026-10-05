@@ -1,0 +1,758 @@
+/* src/pages/RideDetail.css */
+
+.ride_detail_page {
+  --rd-accent: #0d6efd;
+  --rd-accent-soft: #eff4ff;
+  --rd-ink: #0b1220;
+  --rd-body: #475467;
+  --rd-muted: #98a2b3;
+  --rd-border: #e4e7ec;
+  --rd-border-strong: #d0d5dd;
+  --rd-surface: #ffffff;
+  --rd-surface-2: #f9fafb;
+  --rd-surface-3: #f2f4f7;
+  --rd-danger: #b42318;
+  --rd-danger-bg: #fef3f2;
+  --rd-danger-border: #fecdca;
+  --rd-success: #067647;
+  --rd-success-bg: #ecfdf3;
+  --rd-success-border: #abefc6;
+
+  min-height: 100vh;
+  background: var(--rd-surface);
+  padding: 32px 20px 80px;
+  font-family: "Poppins", sans-serif;
+  color: var(--rd-ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+.ride_detail_page *,
+.ride_detail_page *::before,
+.ride_detail_page *::after { box-sizing: border-box; }
+
+.rd_inner { max-width: 1080px; margin: 0 auto; }
+
+/* ---------- Back ---------- */
+
+.rd_back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px 8px 10px;
+  border-radius: 10px;
+  border: 1.5px solid var(--rd-border);
+  background: var(--rd-surface);
+  color: var(--rd-body);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 150ms ease;
+  margin-bottom: 20px;
+}
+.rd_back:hover {
+  border-color: var(--rd-accent);
+  color: var(--rd-accent);
+  background: var(--rd-accent-soft);
+}
+
+/* ---------- Header ---------- */
+
+.rd_header { margin-bottom: 28px; }
+
+.rd_eyebrow {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--rd-accent);
+  margin: 0 0 10px;
+}
+
+.rd_title {
+  font-family: "Plus Jakarta Sans", "Poppins", sans-serif;
+  font-size: 30px;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  margin: 0 0 12px;
+  text-transform: capitalize;
+  word-break: break-word;
+}
+
+.rd_title_sep {
+  display: inline-block;
+  color: var(--rd-muted);
+  margin: 0 10px;
+  font-weight: 400;
+}
+
+.rd_header_meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 14px;
+  color: var(--rd-body);
+}
+
+.rd_header_meta_item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.rd_header_meta_item svg { color: var(--rd-muted); }
+
+.rd_meta_dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--rd-muted);
+}
+
+/* ---------- Two-column grid ---------- */
+
+.rd_grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 20px;
+  align-items: start;
+}
+
+.rd_col_main {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ---------- Card ---------- */
+
+.rd_card {
+  border: 1px solid var(--rd-border);
+  border-radius: 14px;
+  padding: 20px;
+  background: var(--rd-surface);
+}
+
+.rd_card_title {
+  font-family: "Plus Jakarta Sans", "Poppins", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--rd-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0 0 16px;
+}
+
+/* ---------- Route ---------- */
+
+.rd_route {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  gap: 16px;
+}
+
+.rd_route_rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.rd_route_dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--rd-surface);
+  border: 3px solid var(--rd-accent);
+  flex-shrink: 0;
+}
+.rd_route_dot.end { background: var(--rd-accent); }
+
+.rd_route_line {
+  flex: 1;
+  width: 2px;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      var(--rd-border-strong) 0 4px,
+      transparent 4px 8px
+    );
+  margin: 8px 0;
+  min-height: 40px;
+}
+
+.rd_route_locations {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.rd_route_point {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.rd_route_label {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--rd-ink);
+  text-transform: capitalize;
+}
+
+.rd_route_sub {
+  font-size: 12px;
+  color: var(--rd-muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.rd_route_stops {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.rd_route_stop {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--rd-body);
+}
+
+.rd_route_stop_dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--rd-border-strong);
+  flex-shrink: 0;
+}
+
+/* ---------- Car ---------- */
+
+.rd_car {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.rd_car_icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--rd-accent-soft);
+  color: var(--rd-accent);
+  flex-shrink: 0;
+}
+
+.rd_car_info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.rd_car_name {
+  font-family: "Plus Jakarta Sans", "Poppins", sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--rd-ink);
+  letter-spacing: -0.01em;
+  text-transform: capitalize;
+}
+
+.rd_car_sub {
+  font-size: 13px;
+  color: var(--rd-body);
+  text-transform: capitalize;
+}
+
+.rd_car_seats {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--rd-body);
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--rd-surface-3);
+}
+.rd_car_seats svg { color: var(--rd-muted); }
+
+.rd_amenities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--rd-border);
+}
+
+.rd_amenity {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--rd-body);
+  background: var(--rd-surface-2);
+  border: 1px solid var(--rd-border);
+  border-radius: 6px;
+  padding: 4px 9px;
+  white-space: nowrap;
+}
+
+/* ---------- Badges ---------- */
+
+.rd_badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.rd_badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 999px;
+  letter-spacing: 0.01em;
+}
+
+.rd_badge.subtle {
+  background: var(--rd-surface-3);
+  color: var(--rd-body);
+}
+
+.rd_badge.instant {
+  background: var(--rd-success-bg);
+  color: var(--rd-success);
+  border: 1px solid var(--rd-success-border);
+}
+.rd_badge.instant svg { color: var(--rd-success); }
+
+/* ---------- Booking panel ---------- */
+
+.rd_col_side {
+  position: sticky;
+  top: 20px;
+}
+
+.rd_book_card {
+  border: 1px solid var(--rd-border);
+  border-radius: 14px;
+  padding: 22px;
+  background: var(--rd-surface);
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04),
+              0 12px 32px -20px rgba(16, 24, 40, 0.18);
+}
+
+.rd_price_head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px dashed var(--rd-border);
+}
+
+.rd_price_value {
+  font-family: "Plus Jakarta Sans", "Poppins", sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--rd-ink);
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.rd_price_unit {
+  font-size: 13px;
+  color: var(--rd-muted);
+  font-weight: 500;
+}
+
+/* Fields */
+
+.rd_field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.rd_label {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--rd-ink);
+}
+
+.rd_input {
+  width: 100%;
+  padding: 11px 14px;
+  border-radius: 10px;
+  border: 1.5px solid var(--rd-border);
+  background: var(--rd-surface-2);
+  color: var(--rd-ink);
+  font-family: inherit;
+  font-size: 14.5px;
+  outline: none;
+  transition: all 150ms ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none'><path d='M6 9l6 6 6-6' stroke='%2398a2b3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+}
+
+.rd_input:focus {
+  border-color: var(--rd-accent);
+  background-color: var(--rd-surface);
+  box-shadow: 0 0 0 4px var(--rd-accent-soft);
+}
+
+.rd_hint.error {
+  font-size: 12.5px;
+  color: var(--rd-danger);
+  font-weight: 500;
+}
+
+/* Stepper */
+
+.rd_stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1.5px solid var(--rd-border);
+  border-radius: 10px;
+  padding: 4px;
+  background: var(--rd-surface-2);
+  width: fit-content;
+}
+
+.rd_stepper_btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: none;
+  background: var(--rd-surface);
+  color: var(--rd-ink);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 150ms ease;
+  font-family: inherit;
+}
+
+.rd_stepper_btn:hover:not(:disabled) {
+  background: var(--rd-accent);
+  color: #ffffff;
+}
+
+.rd_stepper_btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.rd_stepper_value {
+  min-width: 40px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--rd-ink);
+}
+
+/* Totals */
+
+.rd_totals {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 0;
+  margin-bottom: 16px;
+  border-top: 1px dashed var(--rd-border);
+  border-bottom: 1px dashed var(--rd-border);
+}
+
+.rd_total_row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13.5px;
+  color: var(--rd-body);
+}
+
+.rd_total_value {
+  font-weight: 600;
+  color: var(--rd-ink);
+}
+
+.rd_total_row.grand {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--rd-ink);
+  padding-top: 8px;
+  border-top: 1px dashed var(--rd-border);
+}
+
+.rd_total_grand {
+  font-family: "Plus Jakarta Sans", "Poppins", sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--rd-ink);
+  letter-spacing: -0.01em;
+}
+
+/* Error alert */
+
+.rd_alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: var(--rd-danger-bg);
+  border: 1px solid var(--rd-danger-border);
+  color: var(--rd-danger);
+  font-size: 12.5px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  margin-bottom: 14px;
+  line-height: 1.4;
+}
+.rd_alert svg { flex-shrink: 0; margin-top: 1px; }
+
+/* Book button */
+
+.rd_book_btn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  border: none;
+  background: var(--rd-accent);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 150ms ease;
+  min-height: 50px;
+}
+
+.rd_book_btn:hover:not(:disabled) {
+  filter: brightness(0.94);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(13, 110, 253, 0.28);
+}
+
+.rd_book_btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.rd_spinner {
+  width: 16px;
+  height: 16px;
+  border: 2.2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: rd-spin 700ms linear infinite;
+}
+@keyframes rd-spin { to { transform: rotate(360deg); } }
+
+.rd_book_note {
+  font-size: 11.5px;
+  color: var(--rd-muted);
+  line-height: 1.5;
+  margin: 12px 0 0;
+  text-align: center;
+}
+
+/* ---------- States ---------- */
+
+.rd_state {
+  text-align: center;
+  padding: 56px 24px;
+  border: 1px solid var(--rd-border);
+  border-radius: 14px;
+  max-width: 520px;
+  margin: 24px auto 0;
+}
+
+.rd_state_icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--rd-accent-soft);
+  color: var(--rd-accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+
+.rd_state_icon.error {
+  background: var(--rd-danger-bg);
+  color: var(--rd-danger);
+}
+
+.rd_state_icon.success {
+  background: var(--rd-success-bg);
+  color: var(--rd-success);
+}
+
+.rd_state_title {
+  font-family: "Plus Jakarta Sans", "Poppins", sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: var(--rd-ink);
+}
+
+.rd_state_copy {
+  font-size: 14.5px;
+  color: var(--rd-body);
+  line-height: 1.55;
+  margin: 0 0 24px;
+}
+
+.rd_state_actions {
+  display: inline-flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Success summary */
+
+.rd_success_summary {
+  text-align: left;
+  border: 1px solid var(--rd-border);
+  border-radius: 12px;
+  padding: 6px 16px;
+  background: var(--rd-surface-2);
+  margin-bottom: 24px;
+}
+
+.rd_success_row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  font-size: 13.5px;
+  border-bottom: 1px solid var(--rd-border);
+}
+.rd_success_row:last-child { border-bottom: none; }
+.rd_success_label { color: var(--rd-muted); font-weight: 500; }
+.rd_success_value { color: var(--rd-ink); font-weight: 600; }
+
+/* Buttons */
+
+.rd_btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 18px;
+  border-radius: 10px;
+  border: 1.5px solid var(--rd-border);
+  background: var(--rd-surface);
+  color: var(--rd-ink);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 150ms ease;
+  min-height: 46px;
+  text-decoration: none;
+}
+
+.rd_btn.primary {
+  background: var(--rd-accent);
+  border-color: var(--rd-accent);
+  color: #ffffff;
+}
+.rd_btn.primary:hover {
+  filter: brightness(0.94);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(13, 110, 253, 0.25);
+}
+
+.rd_btn.ghost:hover { background: var(--rd-surface-2); }
+
+/* ---------- Skeleton ---------- */
+
+.rd_sk_line {
+  height: 14px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  background: linear-gradient(90deg, #eef0f3 0%, #f6f7f9 50%, #eef0f3 100%);
+  background-size: 200% 100%;
+  animation: rd-shimmer 1400ms infinite linear;
+}
+.rd_sk_line.w40 { width: 40%; }
+.rd_sk_line.w80 { width: 80%; }
+
+.rd_sk_card {
+  height: 160px;
+  border-radius: 14px;
+  margin-bottom: 14px;
+  background: linear-gradient(90deg, #eef0f3 0%, #f6f7f9 50%, #eef0f3 100%);
+  background-size: 200% 100%;
+  animation: rd-shimmer 1400ms infinite linear;
+}
+
+@keyframes rd-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 900px) {
+  .rd_grid {
+    grid-template-columns: 1fr;
+  }
+  .rd_col_side {
+    position: static;
+    order: -1;
+  }
+}
+
+@media (max-width: 560px) {
+  .ride_detail_page { padding: 20px 16px 64px; }
+  .rd_title { font-size: 22px; }
+  .rd_title_sep { margin: 0 6px; }
+  .rd_card { padding: 16px; }
+  .rd_book_card { padding: 18px; }
+  .rd_price_value { font-size: 24px; }
+  .rd_state { padding: 44px 20px; }
+  .rd_state_title { font-size: 19px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rd_book_btn,
+  .rd_btn,
+  .rd_back,
+  .rd_stepper_btn,
+  .rd_sk_line,
+  .rd_sk_card,
+  .rd_spinner {
+    transition: none !important;
+    animation: none !important;
+  }
+}
