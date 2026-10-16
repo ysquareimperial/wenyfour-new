@@ -1,0 +1,83 @@
+/* src/index.css
+   Global base + design tokens. Loaded after Bootstrap so these win.
+   Page stylesheets keep their own scoped aliases (--ac-*, --rd-*, …) but
+   every value below is the single source of truth for the palette. */
+
+:root {
+  --wf-font-body: "Poppins", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --wf-font-display: "Plus Jakarta Sans", "Poppins", system-ui, sans-serif;
+
+  --wf-accent: #0d6efd;
+  --wf-accent-hover: #0b5ed7;
+  --wf-accent-soft: #eff4ff;
+  --wf-ink: #0b1220;
+  --wf-body: #475467;
+  --wf-muted: #98a2b3;
+  --wf-border: #e4e7ec;
+  --wf-border-strong: #d0d5dd;
+  --wf-surface: #ffffff;
+  --wf-surface-2: #f9fafb;
+  --wf-surface-3: #f2f4f7;
+
+  --wf-danger: #b42318;
+  --wf-danger-bg: #fef3f2;
+  --wf-danger-border: #fecdca;
+  --wf-success: #067647;
+  --wf-success-bg: #ecfdf3;
+  --wf-success-border: #abefc6;
+  --wf-warn: #b54708;
+  --wf-warn-bg: #fffaeb;
+  --wf-warn-border: #fedf89;
+
+  /* Bootstrap hooks */
+  --bs-body-font-family: var(--wf-font-body);
+  --bs-body-color: var(--wf-ink);
+  --bs-primary: var(--wf-accent);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--wf-font-body);
+  color: var(--wf-ink);
+  background-color: var(--wf-surface);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Form controls don't inherit font by default */
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+/* Reactstrap modals render in a portal outside the app shell */
+.modal-content {
+  font-family: var(--wf-font-body);
+  color: var(--wf-ink);
+  border-radius: 16px;
+  border: 1px solid var(--wf-border);
+  box-shadow: 0 24px 60px -24px rgba(16, 24, 40, 0.35);
+}
+
+.modal-backdrop.show {
+  opacity: 0.4;
+}
+
+::selection {
+  background: var(--wf-accent-soft);
+  color: var(--wf-ink);
+}

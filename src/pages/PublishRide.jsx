@@ -5,23 +5,12 @@ import "./PublishRide.css";
 import { useAuth } from "../context/AuthContext";
 import DriverGateModal from "./DriverGateModal";
 import { getDriverEligibility } from "../utils/driverEligibility";
-
-const API_BASE = "https://api.wenyfour.com.ng";
+import { getAuthToken } from "../services/http";
+import { carsApi } from "../services/carsApi";
+import { ridesApi } from "../services/ridesApi";
 
 // API requires coordinates; we send 0s from the UI.
 const ZERO_COORDS = { lat: 0, lng: 0 };
-
-/* ------------------------------------------------------------------ *
- *  Auth helper
- * ------------------------------------------------------------------ */
-function getAuthToken() {
-  return (
-    localStorage.getItem("token") ||
-    localStorage.getItem("access_token") ||
-    localStorage.getItem("auth_token") ||
-    ""
-  );
-}
 
 /* ------------------------------------------------------------------ *
  *  Helpers
@@ -219,22 +208,8 @@ const PublishRide = () => {
       setCarsError("");
 
       try {
-        const res = await fetch(`${API_BASE}/cars/my-cars`, {
-          method: "GET",
-          headers: {
-            accept: "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        if (!res.ok) {
-          if (res.status === 401 || res.status === 403) {
-            throw new Error("Your session has expired. Please sign in again.");
-          }
-          throw new Error(`Request failed with ${res.status}`);
-        }
-        const data = await res.json();
+        const list = await carsApi.list();
         if (cancelled) return;
-        const list = Array.isArray(data) ? data : [];
         setCars(list);
         setCarsStatus("success");
 
@@ -247,7 +222,7 @@ const PublishRide = () => {
         if (cancelled) return;
         console.error("[publish ride] cars fetch failed:", err);
         setCarsStatus("error");
-        setCarsError("We couldn't load your cars. Please refresh and try again.");
+        setCarsError(err.message || "We couldn't load your cars. Please refresh and try again.");
       }
     }
 
@@ -271,15 +246,19 @@ const PublishRide = () => {
     if (startDate) list.push(startDate.trim());
     if (endDate) list.push(endDate.trim());
     // include all distinct dates between start and end
+    // include all distinct dates between start and end (UTC math so the
+    // user's timezone can't shift a day)
     if (startDate && endDate) {
-      const s = new Date(startDate);
-      const e = new Date(endDate);
+      const s = new Date(`${startDate}T00:00:00Z`);
+      const e = new Date(`${endDate}T00:00:00Z`);
       if (!Number.isNaN(s.getTime()) && !Number.isNaN(e.getTime()) && s <= e) {
         const cur = new Date(s);
-        while (cur <= e) {
+        let guard = 0;
+        while (cur <= e && guard < 366) {
           const iso = cur.toISOString().slice(0, 10);
           if (!list.includes(iso)) list.push(iso);
-          cur.setDate(cur.getDate() + 1);
+          cur.setUTCDate(cur.getUTCDate() + 1);
+          guard += 1;
         }
       }
     }
@@ -299,6 +278,18 @@ const PublishRide = () => {
     if (!pickupTime) return "Please choose a pickup time.";
     if (!maxPassengers || Number(maxPassengers) < 1) {
       return "Maximum passengers must be at least 1.";
+    }
+    if (Number(maxBackSeatPassengers) > Number(maxPassengers)) {
+      return "Back-seat passengers can't be more than the total passengers.";
+    }
+    const chosenCar = (cars || []).find((c) => String(c.id) === String(carId));
+    if (chosenCar?.capacity && Number(maxPassengers) > Number(chosenCar.capacity)) {
+      return `This car only seats ${chosenCar.capacity} passengers.`;
+    }
+    if (endDate) {
+      const span =
+        (new Date(`${endDate}T00:00:00Z`) - new Date(`${startDate}T00:00:00Z`)) / 86400000;
+      if (span > 365) return "Rides can be scheduled at most a year ahead.";
     }
     if (pricePerSeat === "" || Number(pricePerSeat) <= 0) {
       return "Please enter a price per seat.";
@@ -347,8 +338,8 @@ const PublishRide = () => {
           s.price_from_origin === "" ? 0 : Number(s.price_from_origin),
       }));
 
-    // Build YYYY-MM-DDTHH:MM:SS (local, no Z) — the API accepts ISO strings.
-    const pickupTimeFull = `${pickupTime}:00`;
+    // API wants HH:MM:SS
+    const pickupTimeFull = pickupTime.length === 5 ? `${pickupTime}:00` : pickupTime;
 
     const payload = {
       car_id: Number(carId),
@@ -372,54 +363,15 @@ const PublishRide = () => {
     };
 
     try {
-      const res = await fetch(`${API_BASE}/rides/`, {
-        method: "POST",
-        headers: {
-          accept: "application/json",
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        let detail = "";
-        try {
-          const body = await res.json();
-          if (Array.isArray(body?.detail)) {
-            detail = body.detail
-              .map((d) => `${d.loc?.join(".")}: ${d.msg}`)
-              .join("; ");
-          } else if (typeof body?.detail === "string") {
-            detail = body.detail;
-          }
-        } catch {
-          /* ignore */
-        }
-
-        const lower = (detail || "").toLowerCase();
-        const eligibleHint =
-          res.status === 403 ||
-          /eligib|verif|licence|license|nin|profile/.test(lower);
-
-        if (res.status === 401) {
-          throw new Error("Your session has expired. Please sign in again.");
-        }
-        if (eligibleHint) {
-          setEligibilityBlocked(true);
-          throw new Error(
-            detail ||
-              "You need to complete your profile and verify your NIN and driver's licence before publishing rides.",
-          );
-        }
-        throw new Error(detail || `Request failed with ${res.status}`);
-      }
-
-      const ride = await res.json();
+      const ride = await ridesApi.publish(payload);
       setCreatedRide(ride);
       setStatus("success");
     } catch (err) {
       console.error("[publish ride] failed:", err);
+      const lower = (err.message || "").toLowerCase();
+      if (err.status === 403 || /eligib|verif|licen[cs]e|nin|profile|suspend/.test(lower)) {
+        setEligibilityBlocked(true);
+      }
       setStatus("error");
       setErrorMsg(err.message || "Something went wrong. Please try again.");
     }

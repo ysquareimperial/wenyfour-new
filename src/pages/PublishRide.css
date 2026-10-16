@@ -47,7 +47,7 @@
 
 .pr_title {
   font-family: "Plus Jakarta Sans", "Poppins", sans-serif;
-  font-size: 32px;
+  font-size: 30px;
   line-height: 1.15;
   font-weight: 700;
   letter-spacing: -0.015em;
@@ -582,7 +582,7 @@
     padding: 24px 16px 64px;
   }
 
-  .pr_title { font-size: 26px; }
+  .pr_title { font-size: 24px; }
   .pr_subtitle { font-size: 14px; }
 
   .pr_row { grid-template-columns: 1fr; gap: 12px; }

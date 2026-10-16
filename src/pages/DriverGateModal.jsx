@@ -60,6 +60,7 @@ const DriverGateModal = ({
   onClose,
   eligibility,
   onRefresh,
+  user,
   actionLabel = "continue",
 }) => {
   const [licenseModalOpen, setLicenseModalOpen] = useState(false);

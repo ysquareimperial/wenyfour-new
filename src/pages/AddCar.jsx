@@ -2,21 +2,10 @@
 import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./AddCar.css";
-// src/pages/AddCar.jsx
 import { useAuth } from "../context/AuthContext";
 import { getDriverEligibility } from "../utils/driverEligibility";
 import DriverGateModal from "./DriverGateModal";
-
-const API_BASE = "https://api.wenyfour.com.ng";
-
-function getAuthToken() {
-  return (
-    localStorage.getItem("token") ||
-    localStorage.getItem("access_token") ||
-    localStorage.getItem("auth_token") ||
-    ""
-  );
-}
+import { carsApi, getAuthToken } from "../services/carsApi";
 
 const AMENITY_FIELDS = [
   { key: "has_wifi", label: "Wi-Fi" },
@@ -206,56 +195,8 @@ const AddCar = () => {
 
     setStatus("submitting");
 
-    // Build multipart form-data (per API spec)
-    const fd = new FormData();
-    fd.append("make", form.make.trim());
-    fd.append("model", form.model.trim());
-    fd.append("year", String(Number(form.year)));
-    fd.append("color", form.color.trim());
-    fd.append("plate_number", form.plate_number.trim());
-    fd.append("capacity", String(Number(form.capacity)));
-    fd.append("is_tinted", String(!!form.is_tinted));
-    fd.append("has_wifi", String(!!form.has_wifi));
-    fd.append("has_air_conditioning", String(!!form.has_air_conditioning));
-    fd.append("has_power_outlets", String(!!form.has_power_outlets));
-    fd.append("smoking_allowed", String(!!form.smoking_allowed));
-    fd.append("pets_allowed", String(!!form.pets_allowed));
-    fd.append("wheelchair_accessible", String(!!form.wheelchair_accessible));
-    if (file) fd.append("file", file);
-
     try {
-      const res = await fetch(`${API_BASE}/cars/`, {
-        method: "POST",
-        headers: {
-          accept: "application/json",
-          Authorization: `Bearer ${token}`,
-          // DO NOT set Content-Type — browser sets multipart boundary
-        },
-        body: fd,
-      });
-
-      if (!res.ok) {
-        let detail = "";
-        try {
-          const body = await res.json();
-          if (Array.isArray(body?.detail)) {
-            detail = body.detail
-              .map((d) => `${d.loc?.join(".")}: ${d.msg}`)
-              .join("; ");
-          } else if (typeof body?.detail === "string") {
-            detail = body.detail;
-          }
-        } catch {
-          /* ignore */
-        }
-
-        if (res.status === 401 || res.status === 403) {
-          throw new Error("Your session has expired. Please sign in again.");
-        }
-        throw new Error(detail || `Request failed with ${res.status}`);
-      }
-
-      const car = await res.json();
+      const car = await carsApi.create(form, file);
       setCreatedCar(car);
       setStatus("success");
       setForm(INITIAL_FORM);
@@ -337,7 +278,7 @@ const AddCar = () => {
               <button
                 type="button"
                 className="ac_btn"
-                onClick={() => navigate("/cars")}
+                onClick={() => navigate("/my-cars")}
               >
                 View my cars
                 <Icon.Arrow />

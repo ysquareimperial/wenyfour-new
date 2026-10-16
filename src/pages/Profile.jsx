@@ -6,16 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import { getDriverEligibility } from "../utils/driverEligibility";
 import LicenseUploadModal from "./LicenseUploadModal";
 
-const API_BASE = "https://api.wenyfour.com.ng";
-
-function getAuthToken() {
-  return (
-    localStorage.getItem("token") ||
-    localStorage.getItem("access_token") ||
-    localStorage.getItem("auth_token") ||
-    ""
-  );
-}
+import { request, getAuthToken, resolveMediaUrl } from "../services/http";
 
 /* ------------------------------------------------------------------ *
  *  Small helpers
@@ -23,7 +14,8 @@ function getAuthToken() {
 
 function formatDate(iso) {
   if (!iso) return "—";
-  const d = new Date(iso);
+  // Plain YYYY-MM-DD dates are calendar dates, not UTC instants.
+  const d = /^\d{4}-\d{2}-\d{2}$/.test(iso) ? new Date(`${iso}T00:00:00`) : new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
   return d.toLocaleDateString("en-NG", {
     day: "numeric",
@@ -43,7 +35,7 @@ function initialsFrom(name) {
 function avatarUrl(photoPath) {
   if (!photoPath) return "";
   if (/^https?:\/\//i.test(photoPath)) return photoPath;
-  return `${API_BASE}/${photoPath.replace(/^\//, "")}`;
+  return resolveMediaUrl(photoPath);
 }
 
 /* ------------------------------------------------------------------ *
@@ -355,42 +347,15 @@ const Profile = () => {
     };
 
     try {
-      const res = await fetch(`${API_BASE}/profile/me`, {
+      const data = await request("/profile/me", {
         method: "PUT",
-        headers: {
-          accept: "application/json",
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
+        body: payload,
+        auth: "required",
       });
-
-      if (!res.ok) {
-        let detail = "";
-        try {
-          const body = await res.json();
-          if (Array.isArray(body?.detail)) {
-            detail = body.detail
-              .map((d) => `${d.loc?.join(".")}: ${d.msg}`)
-              .join("; ");
-          } else if (typeof body?.detail === "string") {
-            detail = body.detail;
-          }
-        } catch {
-          /* ignore */
-        }
-
-        if (res.status === 401 || res.status === 403) {
-          throw new Error("Your session has expired. Please sign in again.");
-        }
-        throw new Error(detail || `Request failed with ${res.status}`);
-      }
-
-      const data = await res.json();
-      updateProfile({
-        ...data,
-        nin_verified: data.nin_verification_status === "verified",
-      });
+      // PUT returns only the editable fields; merge, then pull the full
+      // profile so flags like profile_complete stay accurate.
+      updateProfile(data || {});
+      refreshProfile().catch(() => {});
       setEditing(false);
       setSuccessMsg("Profile updated.");
     } catch (err) {
@@ -443,9 +408,7 @@ const Profile = () => {
               {user?.email ? ` · ${user.email}` : ""}
             </p>
             <div className="pf_badges">
-              {user?.is_passenger && (
-                <span className="pf_badge">Passenger</span>
-              )}
+              <span className="pf_badge">Passenger</span>
               {user?.is_driver && (
                 <span className="pf_badge driver">Driver</span>
               )}

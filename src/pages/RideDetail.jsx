@@ -2,17 +2,15 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import "./RideDetail.css";
-
-const API_BASE = "https://api.wenyfour.com.ng";
-
-function getAuthToken() {
-  return (
-    localStorage.getItem("token") ||
-    localStorage.getItem("access_token") ||
-    localStorage.getItem("auth_token") ||
-    ""
-  );
-}
+import { getAuthToken } from "../services/http";
+import { bookingsApi } from "../services/bookingsApi";
+import {
+  PAYMENT_PROVIDERS,
+  paymentsApi,
+  rememberPendingPayment,
+} from "../services/paymentsApi";
+import { ridesApi } from "../services/ridesApi";
+import { useAuth } from "../context/AuthContext";
 
 /* ------------------------------------------------------------------ *
  *  Helpers (mirror SearchRide.jsx so formatting is consistent)
@@ -188,7 +186,15 @@ const RideDetail = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const { user } = useAuth();
   const presetDate = location.state?.date || "";
+  const presetPassengers = Number(location.state?.passengers) || 1;
+  // Seats left on the searched date (from /rides/search). The ride itself
+  // only carries max_passengers, so this is the best number we have.
+  const seatsLeftHint =
+    location.state?.seatsLeft != null && presetDate
+      ? Number(location.state.seatsLeft)
+      : null;
 
   const [ride, setRide] = useState(null);
   const [status, setStatus] = useState("loading"); // loading | success | error
@@ -197,10 +203,11 @@ const RideDetail = () => {
   const [selectedDate, setSelectedDate] = useState(presetDate);
 
   // Booking state
-  const [seats, setSeats] = useState(1);
+  const [seats, setSeats] = useState(presetPassengers);
   const [bookingStatus, setBookingStatus] = useState("idle"); // idle | submitting | success | error
   const [bookingError, setBookingError] = useState("");
-  const [booking, setBooking] = useState(null);
+  const [provider, setProvider] = useState("paystack");
+  const [bookingStep, setBookingStep] = useState(""); // "" | booking | payment | redirect
 
   /* -------- fetch ride -------- */
 
@@ -211,15 +218,7 @@ const RideDetail = () => {
       setStatus("loading");
       setErrorMsg("");
       try {
-        const res = await fetch(`${API_BASE}/rides/${id}`, {
-          method: "GET",
-          headers: { accept: "application/json" },
-        });
-        if (!res.ok) {
-          if (res.status === 404) throw new Error("This ride no longer exists.");
-          throw new Error(`Request failed with ${res.status}`);
-        }
-        const data = await res.json();
+        const data = await ridesApi.get(id);
         if (cancelled) return;
         setRide(data);
 
@@ -236,7 +235,11 @@ const RideDetail = () => {
         if (cancelled) return;
         console.error("[ride detail] failed:", err);
         setStatus("error");
-        setErrorMsg(err.message || "Could not load this ride.");
+        setErrorMsg(
+          err.status === 404
+            ? "This ride no longer exists."
+            : err.message || "Could not load this ride.",
+        );
       }
     }
 
@@ -254,8 +257,18 @@ const RideDetail = () => {
       .sort();
   }, [ride]);
 
-  const maxSeats = ride?.max_passengers || 1;
+  const seatCap =
+    selectedDate && selectedDate === presetDate && seatsLeftHint != null
+      ? seatsLeftHint
+      : ride?.max_passengers || 1;
+  const maxSeats = Math.max(1, seatCap);
   const totalPrice = ride ? Number(ride.price_per_seat) * seats : 0;
+  const isOwnRide = !!(user?.id && ride?.driver_id && user.id === ride.driver_id);
+
+  // Keep the seat count inside the allowed range when the date changes.
+  useEffect(() => {
+    setSeats((s) => Math.min(Math.max(1, s), maxSeats));
+  }, [maxSeats]);
 
   /* -------- booking -------- */
 
@@ -275,47 +288,50 @@ const RideDetail = () => {
 
     setBookingStatus("submitting");
 
+    // Pay-to-book: reserve the seat(s), then send the passenger straight to
+    // the payment page. The booking only counts once the payment verifies.
+    let created = null;
     try {
-      const res = await fetch(`${API_BASE}/bookings/`, {
-        method: "POST",
-        headers: {
-          accept: "application/json",
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          ride_id: Number(ride.id),
-          seats: Number(seats),
-          travel_date: selectedDate,
-        }),
+      setBookingStep("booking");
+      created = await bookingsApi.create({
+        rideId: ride.id,
+        travelDate: selectedDate,
+        seats,
       });
 
-      if (!res.ok) {
-        let detail = "";
-        try {
-          const body = await res.json();
-          if (Array.isArray(body?.detail)) {
-            detail = body.detail
-              .map((d) => `${d.loc?.join(".")}: ${d.msg}`)
-              .join("; ");
-          } else if (typeof body?.detail === "string") {
-            detail = body.detail;
-          }
-        } catch {
-          /* ignore */
-        }
-        if (res.status === 401 || res.status === 403) {
-          throw new Error("Your session has expired. Please sign in again.");
-        }
-        throw new Error(detail || `Request failed with ${res.status}`);
-      }
+      setBookingStep("payment");
+      const init = await paymentsApi.initialize({
+        bookingId: created.id,
+        provider,
+      });
 
-      const data = await res.json();
-      setBooking(data);
-      setBookingStatus("success");
+      rememberPendingPayment({
+        bookingId: created.id,
+        paymentId: init.payment_id,
+        transactionRef: init.transaction_ref,
+        provider: init.provider || provider,
+        rideId: ride.id,
+        amountNaira: init.amount_naira,
+      });
+
+      if (init.auth_url) {
+        setBookingStep("redirect");
+        window.location.assign(init.auth_url);
+        return;
+      }
+      // No hosted page returned — go straight to verification.
+      navigate(
+        `/payments/callback?reference=${encodeURIComponent(init.transaction_ref)}`,
+        { replace: true },
+      );
     } catch (err) {
       console.error("[booking] failed:", err);
+      // Don't leave an unpaid booking holding seats if payment never started.
+      if (created?.id) {
+        bookingsApi.cancel(created.id).catch(() => {});
+      }
       setBookingStatus("error");
+      setBookingStep("");
       setBookingError(err.message || "Could not complete your booking.");
     }
   };
@@ -356,67 +372,6 @@ const RideDetail = () => {
               >
                 Search rides
                 <Icon.Arrow />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  /* -------- booking success -------- */
-
-  if (bookingStatus === "success" && booking) {
-    return (
-      <div className="ride_detail_page">
-        <div className="rd_inner">
-          <div className="rd_state">
-            <div className="rd_state_icon success">
-              <Icon.Check />
-            </div>
-            <h2 className="rd_state_title">Booking confirmed</h2>
-            <p className="rd_state_copy">
-              Your seat{seats === 1 ? "" : "s"} from{" "}
-              <strong>{ride.pickup_location}</strong> to{" "}
-              <strong>{ride.dropoff_location}</strong> on{" "}
-              <strong>{formatDateFriendly(selectedDate)}</strong>{" "}
-              {seats === 1 ? "is" : "are"} booked.
-            </p>
-
-            <div className="rd_success_summary">
-              <div className="rd_success_row">
-                <span className="rd_success_label">Seats</span>
-                <span className="rd_success_value">{seats}</span>
-              </div>
-              <div className="rd_success_row">
-                <span className="rd_success_label">Total</span>
-                <span className="rd_success_value">
-                  {formatNaira(totalPrice)}
-                </span>
-              </div>
-              {booking?.id != null && (
-                <div className="rd_success_row">
-                  <span className="rd_success_label">Booking ID</span>
-                  <span className="rd_success_value">#{booking.id}</span>
-                </div>
-              )}
-            </div>
-
-            <div className="rd_state_actions">
-              <button
-                type="button"
-                className="rd_btn primary"
-                onClick={() => navigate("/rides/my-bookings")}
-              >
-                View my bookings
-                <Icon.Arrow />
-              </button>
-              <button
-                type="button"
-                className="rd_btn ghost"
-                onClick={() => navigate("/search-ride")}
-              >
-                Search more rides
               </button>
             </div>
           </div>
@@ -568,6 +523,19 @@ const RideDetail = () => {
 
           {/* Right column: booking panel */}
           <aside className="rd_col_side">
+            {isOwnRide ? (
+              <div className="rd_book_card">
+                <div className="rd_price_head">
+                  <span className="rd_price_value">
+                    {formatNaira(ride.price_per_seat)}
+                  </span>
+                  <span className="rd_price_unit">per seat</span>
+                </div>
+                <p className="rd_book_note" style={{ marginTop: 0 }}>
+                  This is your ride. Passengers will see a booking panel here.
+                </p>
+              </div>
+            ) : (
             <form className="rd_book_card" onSubmit={handleBook}>
               <div className="rd_price_head">
                 <span className="rd_price_value">
@@ -575,6 +543,13 @@ const RideDetail = () => {
                 </span>
                 <span className="rd_price_unit">per seat</span>
               </div>
+
+              {seatsLeftHint != null && selectedDate === presetDate && (
+                <p className="rd_book_note" style={{ marginTop: -6 }}>
+                  {seatsLeftHint} seat{seatsLeftHint === 1 ? "" : "s"} left on{" "}
+                  {formatDateShort(presetDate)}
+                </p>
+              )}
 
               {/* Date picker */}
               <div className="rd_field">
@@ -629,6 +604,32 @@ const RideDetail = () => {
                 </div>
               </div>
 
+              {/* Payment method */}
+              <fieldset className="rd_field rd_pay_field">
+                <legend className="rd_label">Pay with</legend>
+                <div className="rd_pay_options">
+                  {PAYMENT_PROVIDERS.map((p) => (
+                    <label
+                      key={p.value}
+                      className={`rd_pay_option${provider === p.value ? " active" : ""}`}
+                    >
+                      <input
+                        type="radio"
+                        name="rd_provider"
+                        value={p.value}
+                        checked={provider === p.value}
+                        onChange={() => setProvider(p.value)}
+                      />
+                      <span className="rd_pay_radio" aria-hidden="true" />
+                      <span className="rd_pay_text">
+                        <span className="rd_pay_name">{p.label}</span>
+                        <span className="rd_pay_hint">{p.hint}</span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+
               {/* Totals */}
               <div className="rd_totals">
                 <div className="rd_total_row">
@@ -664,21 +665,28 @@ const RideDetail = () => {
                 {bookingStatus === "submitting" ? (
                   <>
                     <span className="rd_spinner" aria-hidden="true" />
-                    Booking…
+                    {bookingStep === "redirect"
+                      ? "Opening payment…"
+                      : bookingStep === "payment"
+                        ? "Preparing payment…"
+                        : "Reserving seat…"}
                   </>
                 ) : (
                   <>
-                    Book {seats === 1 ? "seat" : `${seats} seats`}
+                    Pay {formatNaira(totalPrice)} &amp; book
                     <Icon.Arrow />
                   </>
                 )}
               </button>
 
               <p className="rd_book_note">
-                You&apos;ll only be charged once the driver confirms
-                {ride.instant_booking ? " — this ride books instantly." : "."}
+                You&apos;ll pay securely on {provider === "squad" ? "Squad" : "Paystack"}.
+                {ride.instant_booking
+                  ? " This ride books instantly once payment clears."
+                  : " The driver confirms your seat after payment."}
               </p>
             </form>
+            )}
           </aside>
         </div>
       </div>

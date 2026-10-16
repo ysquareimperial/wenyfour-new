@@ -18,6 +18,9 @@ import MyCars from "../pages/MyCars";
 import MyRides from "../pages/MyRides";
 import Profile from "../pages/Profile";
 import RideDetail from "../pages/RideDetail";
+import MyBookings from "../pages/MyBookings";
+import PaymentCallback from "../pages/PaymentCallback";
+import Earnings from "../pages/Earnings";
 
 function AppNavigation() {
   return useRoutes([
@@ -88,7 +91,31 @@ function AppNavigation() {
             </ProtectedRoute>
           ),
         },
-          {
+        {
+          path: "/my-bookings",
+          element: (
+            <ProtectedRoute>
+              <MyBookings />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: "/payments/callback",
+          element: (
+            <ProtectedRoute>
+              <PaymentCallback />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: "/earnings",
+          element: (
+            <ProtectedRoute>
+              <Earnings />
+            </ProtectedRoute>
+          ),
+        },
+        {
           path: "/rides/:id",
           element: (
             <ProtectedRoute>

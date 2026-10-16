@@ -1,6 +1,13 @@
 // src/context/AuthContext.jsx
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+} from "react";
 import api from "../services/apis";
+import { SESSION_EXPIRED_EVENT, parseErrorDetail } from "../services/http";
 
 const AuthContext = createContext(null);
 
@@ -19,16 +26,10 @@ function isEmail(value) {
 
 function extractErrorMessage(error) {
   const data = error?.response?.data;
-  if (!data) return "Something went wrong. Please try again.";
-  if (typeof data === "string") return data;
-  if (Array.isArray(data.detail))
-    return data.detail.map((d) => d.msg).join(", ");
-  return (
-    data.detail ||
-    data.message ||
-    data.error ||
-    "Something went wrong. Please try again."
-  );
+  if (!error?.response) {
+    return "Can't reach the server. Check your connection and try again.";
+  }
+  return parseErrorDetail(data) || "Something went wrong. Please try again.";
 }
 
 export function AuthProvider({ children }) {
@@ -111,11 +112,14 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  // Only phone numbers have a resend endpoint (POST /resend-otp).
   const resendVerification = useCallback(async (identifier) => {
-    const body = {};
-    if (isEmail(identifier)) body.email = identifier;
-    else body.phone_number = identifier;
-    const { data } = await api.post("/resend-verification", body);
+    if (isEmail(identifier)) {
+      throw new Error(
+        "Resending isn't available for email sign-ups yet. Check your inbox and spam folder.",
+      );
+    }
+    const { data } = await api.post("/resend-otp", { phone_number: identifier });
     return data;
   }, []);
 
@@ -182,6 +186,24 @@ export function AuthProvider({ children }) {
     localStorage.removeItem("verification_identifier");
     setUser(null);
     setToken(null);
+  }, []);
+
+  // Any 401 from the API (axios or fetch helper) signs the user out so the
+  // router sends them to /login instead of leaving a broken session.
+  useEffect(() => {
+    const onExpired = () => logout();
+    window.addEventListener(SESSION_EXPIRED_EVENT, onExpired);
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, onExpired);
+  }, [logout]);
+
+  // The cached user can go stale (e.g. an admin verifies the NIN). Refresh
+  // once on load so eligibility checks use current data.
+  useEffect(() => {
+    if (!localStorage.getItem("access_token")) return;
+    refreshProfile().catch(() => {
+      /* 401 is handled by the expiry listener; ignore network blips */
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const value = {

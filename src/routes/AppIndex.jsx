@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { NavLink, Outlet, Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "./AppLayout.css";
+import { resolveMediaUrl } from "../services/http";
 
 /* ------------------------------------------------------------------ *
  *  Inline icons (no dependency)
@@ -68,6 +69,23 @@ const Icon = {
       />
     </svg>
   ),
+  Ticket: (p) => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" {...p}>
+      <path
+        d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4V7Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+    </svg>
+  ),
+  Wallet: (p) => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" {...p}>
+      <path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H18v4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <rect x="4" y="7.5" width="16" height="11.5" rx="2.5" stroke="currentColor" strokeWidth="1.8" />
+      <circle cx="16" cy="13.2" r="1.1" fill="currentColor" />
+    </svg>
+  ),
   Menu: (p) => (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" {...p}>
       <path
@@ -122,12 +140,8 @@ const Icon = {
  *  Avatar helpers
  * ------------------------------------------------------------------ */
 
-const API_BASE = "https://api.wenyfour.com.ng";
-
 function avatarUrl(photoPath) {
-  if (!photoPath) return "";
-  if (/^https?:\/\//i.test(photoPath)) return photoPath;
-  return `${API_BASE}/${photoPath.replace(/^\//, "")}`;
+  return resolveMediaUrl(photoPath);
 }
 
 function initialsFrom(name) {
@@ -144,13 +158,15 @@ function initialsFrom(name) {
 
 const MAIN_NAV = [
   { to: "/search-ride", label: "Find a ride", icon: <Icon.Search /> },
-  { to: "/my-rides", label: "My rides", icon: <Icon.Route /> },
-  { to: "/my-cars", label: "My cars", icon: <Icon.Car /> },
+  { to: "/my-bookings", label: "My bookings", icon: <Icon.Ticket /> },
 ];
 
 const DRIVER_NAV = [
-  { to: "/cars/new", label: "Add a car", icon: <Icon.Car /> },
   { to: "/rides/publish", label: "Publish a ride", icon: <Icon.Route /> },
+  { to: "/my-rides", label: "My rides", icon: <Icon.Route /> },
+  { to: "/my-cars", label: "My cars", icon: <Icon.Car /> },
+  { to: "/cars/new", label: "Add a car", icon: <Icon.Car /> },
+  { to: "/earnings", label: "Earnings", icon: <Icon.Wallet /> },
 ];
 
 /* ------------------------------------------------------------------ *

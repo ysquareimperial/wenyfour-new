@@ -1,15 +1,10 @@
 // src/services/apis.js
-//
-// NOTE: adjust baseURL to match whatever your real API URL is/was in the
-// original file — I don't have your original apis.js, so this is a
-// reasonable default. Everything else (the interceptor) is new and is what
-// lets components call `api.put(...)` etc. without manually attaching the
-// Authorization header.
+// Axios instance used by AuthContext and the profile pages. Shares its base
+// URL and session-expiry behaviour with services/http.js.
 import axios from "axios";
+import { API_BASE, SESSION_EXPIRED_EVENT } from "./http";
 
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "https://api.wenyfour.com.ng",
-});
+const api = axios.create({ baseURL: API_BASE });
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("access_token");
@@ -19,14 +14,13 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// If the token is rejected server-side, clear it so the app doesn't get
-// stuck thinking it's still logged in.
+// A rejected token logs the user out everywhere (AuthContext listens).
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("user");
+    const hadToken = !!error.config?.headers?.Authorization;
+    if (error.response?.status === 401 && hadToken) {
+      window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
     }
     return Promise.reject(error);
   },

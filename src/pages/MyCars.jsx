@@ -6,6 +6,7 @@ import { carsApi, getAuthToken, photoUrl } from "../services/carsApi";
 import { Modal, ModalBody } from "reactstrap";
 import "./MyCars.css";
 import EditCarModal from "./EditCarModal";
+import PhotoManagerModal from "./PhotoManagerModal";
 
 const AMENITY_LABELS = {
   has_wifi: "Wi-Fi",
@@ -180,6 +181,14 @@ function CarCard({ car, onEdit, onDelete, onManagePhotos, deleting }) {
           >
             <Icon.Edit />
             Edit
+          </button>
+          <button
+            type="button"
+            className="my_car_action_btn"
+            onClick={() => onManagePhotos(car)}
+          >
+            <Icon.Image />
+            Photos
           </button>
           <button
             type="button"

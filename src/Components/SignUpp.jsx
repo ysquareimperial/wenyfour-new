@@ -276,6 +276,12 @@ export default function SignUpp() {
       setResendSeconds(RESEND_SECONDS);
     } catch (error) {
       console.error("Resend failed:", error);
+      const detail = error?.response?.data?.detail;
+      setOtpError(
+        (typeof detail === "string" && detail) ||
+          error?.message ||
+          "Couldn't resend the code. Please try again.",
+      );
     }
   };
 

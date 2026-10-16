@@ -2,16 +2,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import "./LicenseUploadModal.css";
 
-const API_BASE = "https://api.wenyfour.com.ng";
-
-function getAuthToken() {
-  return (
-    localStorage.getItem("token") ||
-    localStorage.getItem("access_token") ||
-    localStorage.getItem("auth_token") ||
-    ""
-  );
-}
+import { request, getAuthToken } from "../services/http";
 
 const Icon = {
   Close: (p) => (
@@ -114,34 +105,11 @@ const LicenseUploadModal = ({
     fd.append("file", file);
 
     try {
-      const res = await fetch(`${API_BASE}/profile/driver/license-photo`, {
+      const data = await request("/profile/driver/license-photo", {
         method: "POST",
-        headers: {
-          accept: "application/json",
-          Authorization: `Bearer ${token}`,
-          // DO NOT set Content-Type — browser sets multipart boundary
-        },
-        body: fd,
+        form: fd,
+        auth: "required",
       });
-
-      if (!res.ok) {
-        let detail = "";
-        try {
-          const body = await res.json();
-          if (Array.isArray(body?.detail)) {
-            detail = body.detail.map((d) => `${d.loc?.join(".")}: ${d.msg}`).join("; ");
-          } else if (typeof body?.detail === "string") {
-            detail = body.detail;
-          }
-        } catch { /* ignore */ }
-
-        if (res.status === 401 || res.status === 403) {
-          throw new Error("Your session has expired. Please sign in again.");
-        }
-        throw new Error(detail || `Request failed with ${res.status}`);
-      }
-
-      const data = await res.json();
       setStatus("success");
       // Give the user a moment to see success, then close + notify parent
       setTimeout(() => {

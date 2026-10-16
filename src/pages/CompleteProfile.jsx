@@ -9,6 +9,7 @@ import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Modal, ModalBody } from "reactstrap";
 import api from "../services/apis";
+import { parseErrorDetail } from "../services/http";
 import { useAuth } from "../context/AuthContext";
 import AvatarCropper from "../Components/AvatarCropper";
 import { IconAlert, IconPerson, IconPhone } from "../icons";
@@ -40,7 +41,10 @@ const PETS_OPTIONS = [
 
 const CompleteProfile = () => {
   const navigate = useNavigate();
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, refreshProfile } = useAuth();
+  // Held until the user taps "Continue": committing it earlier flips
+  // profile_complete and ProtectedRoute redirects before the modal shows.
+  const pendingProfileRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -177,12 +181,18 @@ const CompleteProfile = () => {
       }
 
       // ============================================================
-      // STEP 3: ONLY NOW UPDATE AUTH STATE
+      // STEP 3: GET THE SERVER'S VIEW (profile_complete etc.)
       // ============================================================
-      updateProfile({
+      try {
+        const { data: fresh } = await api.get("/profile/me");
+        latestProfile = fresh;
+      } catch {
+        /* fall back to what we have */
+      }
+      pendingProfileRef.current = {
         ...latestProfile,
-        nin_verified: latestProfile.nin_verification_status === "verified",
-      });
+        nin_verified: latestProfile?.nin_verification_status === "verified",
+      };
 
       // ============================================================
       // STEP 4: SHOW SUCCESS
@@ -192,7 +202,7 @@ const CompleteProfile = () => {
       console.error("Profile completion error:", err);
 
       setError(
-        err.response?.data?.detail ||
+        parseErrorDetail(err.response?.data) ||
           err.message ||
           "Failed to update profile. Please try again.",
       );
@@ -203,6 +213,12 @@ const CompleteProfile = () => {
 
   const handleContinue = () => {
     setShowSuccessModal(false);
+    if (pendingProfileRef.current) {
+      updateProfile(pendingProfileRef.current);
+      pendingProfileRef.current = null;
+    } else {
+      refreshProfile().catch(() => {});
+    }
     navigate("/search-ride");
   };
 

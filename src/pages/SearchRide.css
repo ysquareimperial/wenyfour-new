@@ -1060,7 +1060,8 @@
 }
 
 /* Tablet */
-@media (max-width: 1024px) {
+/* 1360 = 1120 content + 248 sidebar: below that the single row is too tight */
+@media (max-width: 1360px) {
   .rs_search_grid {
     grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) minmax(0, 1fr);
     grid-template-areas:

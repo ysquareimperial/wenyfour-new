@@ -20,7 +20,7 @@
 
   min-height: 100vh;
   background: var(--rd-surface);
-  padding: 32px 20px 80px;
+  padding: 40px 20px 80px;
   font-family: "Poppins", sans-serif;
   color: var(--rd-ink);
   -webkit-font-smoothing: antialiased;
@@ -734,8 +734,8 @@
 }
 
 @media (max-width: 560px) {
-  .ride_detail_page { padding: 20px 16px 64px; }
-  .rd_title { font-size: 22px; }
+  .ride_detail_page { padding: 24px 16px 64px; }
+  .rd_title { font-size: 24px; }
   .rd_title_sep { margin: 0 6px; }
   .rd_card { padding: 16px; }
   .rd_book_card { padding: 18px; }
@@ -755,4 +755,91 @@
     transition: none !important;
     animation: none !important;
   }
+}
+/* ---------- Payment method picker ---------- */
+
+.rd_pay_field {
+  border: 0;
+  padding: 0;
+  margin: 0 0 16px;
+  min-width: 0;
+}
+
+.rd_pay_field legend {
+  float: none;
+  width: auto;
+  padding: 0;
+}
+
+.rd_pay_options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.rd_pay_option {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border: 1.5px solid var(--rd-border);
+  border-radius: 10px;
+  background: var(--rd-surface);
+  cursor: pointer;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+
+.rd_pay_option:hover {
+  border-color: var(--rd-border-strong);
+}
+
+.rd_pay_option.active {
+  border-color: var(--rd-accent);
+  background: var(--rd-accent-soft);
+}
+
+.rd_pay_option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.rd_pay_option:focus-within {
+  box-shadow: 0 0 0 3px var(--rd-accent-soft);
+}
+
+.rd_pay_radio {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  border-radius: 50%;
+  border: 1.5px solid var(--rd-border-strong);
+  background: var(--rd-surface);
+  transition: border 150ms ease;
+}
+
+.rd_pay_option.active .rd_pay_radio {
+  border: 5px solid var(--rd-accent);
+}
+
+.rd_pay_text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.rd_pay_name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--rd-ink);
+  line-height: 1.2;
+}
+
+.rd_pay_hint {
+  font-size: 11.5px;
+  color: var(--rd-muted);
+  line-height: 1.3;
 }

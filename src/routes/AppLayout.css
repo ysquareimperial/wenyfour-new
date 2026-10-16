@@ -259,71 +259,7 @@
   line-height: 1.2;
 }
 
-/* ---------- Sidebar footer / user row ----------
-
-.app_sidebar_foot {
-  border-top: 1px solid var(--app-border);
-  padding: 12px;
-}
-
-.app_user_row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  justify-content: space-between;
-}
-
-.app_user_meta {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.app_user_name {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--app-ink);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 130px;
-}
-
-.app_user_role {
-  font-size: 11px;
-  color: var(--app-accent);
-  font-weight: 600;
-}
-
-.app_logout_btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  border-radius: 8px;
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--app-body);
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition:
-    background 150ms ease,
-    color 150ms ease,
-    border-color 150ms ease;
-}
-
-.app_logout_btn:hover {
-  background: #fef3f2;
-  color: #b42318;
-}
-
-.app_logout_btn:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px var(--app-accent-soft);
-}
+/* ---------- Icon button (drawer close) ---------- */
 
 .app_icon_btn {
   width: 34px;
@@ -347,7 +283,19 @@
 .app_icon_btn:focus-visible {
   outline: none;
   box-shadow: 0 0 0 4px var(--app-accent-soft);
-} */
+}
+
+/* Close button only exists in the mobile drawer */
+.app_icon_btn.app_sidebar_close {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .app_icon_btn.app_sidebar_close {
+    display: inline-flex;
+  }
+}
+
 
 
 /* ---------- Sidebar footer / user card ---------- */

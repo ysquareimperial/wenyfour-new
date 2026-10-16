@@ -8,12 +8,30 @@ import React, {
 } from "react";
 import "./SearchRide.css";
 import { useNavigate } from "react-router-dom";
+import { API_BASE, parseErrorDetail } from "../services/http";
 /* ------------------------------------------------------------------ *
  *  Config
  * ------------------------------------------------------------------ */
 
-const API_BASE = "https://api.wenyfour.com.ng";
 const SEARCH_ENDPOINT = `${API_BASE}/rides/search`;
+const LAST_SEARCH_KEY = "wf:last-search";
+
+function readLastSearch() {
+  try {
+    const raw = sessionStorage.getItem(LAST_SEARCH_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveLastSearch(value) {
+  try {
+    sessionStorage.setItem(LAST_SEARCH_KEY, JSON.stringify(value));
+  } catch {
+    /* storage unavailable — non-critical */
+  }
+}
 const PAGE_SIZE = 20;
 
 const SORT_OPTIONS = [
@@ -690,9 +708,6 @@ const SearchRide = () => {
         const params = buildParams(query, f, sort, pageNum);
         const url = `${SEARCH_ENDPOINT}?${params.toString()}`;
 
-        // eslint-disable-next-line no-console
-        console.log("[ride search] GET", url);
-
         const res = await fetch(url, {
           method: "GET",
           headers: { accept: "application/json" },
@@ -702,14 +717,7 @@ const SearchRide = () => {
         if (!res.ok) {
           let detail = "";
           try {
-            const body = await res.json();
-            if (body && Array.isArray(body.detail)) {
-              detail = body.detail
-                .map((d) => `${d.loc?.join(".")}: ${d.msg}`)
-                .join("; ");
-            } else if (body && typeof body.detail === "string") {
-              detail = body.detail;
-            }
+            detail = parseErrorDetail(await res.json());
           } catch {
             /* ignore */
           }
@@ -717,8 +725,6 @@ const SearchRide = () => {
         }
 
         const data = await res.json();
-        // eslint-disable-next-line no-console
-        console.log("[ride search] raw response:", data);
 
         // API returns { items, total, page, limit, total_pages }
         // Fall back to a plain array if the backend ever changes shape.
@@ -752,16 +758,41 @@ const SearchRide = () => {
         setMeta(nextMeta);
         setPage(nextMeta.page);
         setStatus("success");
+        saveLastSearch({ query, filters: f, sort, page: nextMeta.page });
       } catch (err) {
         if (err.name === "AbortError") return;
         // eslint-disable-next-line no-console
         console.error("[ride search] failed:", err);
         setStatus("error");
-        setErrorMsg("Something went wrong while searching. Please try again.");
+        setErrorMsg(
+          err.message && !/^Request failed/.test(err.message)
+            ? err.message
+            : "Something went wrong while searching. Please try again.",
+        );
       }
     },
     [buildParams],
   );
+
+  // Coming back from a ride page: restore the previous search instead of
+  // making the user type it again.
+  useEffect(() => {
+    const last = readLastSearch();
+    if (!last?.query) return;
+    const q = last.query;
+    // Drop a stale departure date that is now in the past.
+    if (q.date && q.date < todayISO()) q.date = "";
+    setFrom(q.from || "");
+    setTo(q.to || "");
+    setDate(q.date || "");
+    setPassengers(Number(q.passengers) || 1);
+    const f = { ...EMPTY_FILTERS, ...(last.filters || {}) };
+    setFilters(f);
+    setSortBy(last.sort || "");
+    setSubmitted(q);
+    runSearch(q, f, last.sort || "", Number(last.page) || 1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -780,6 +811,8 @@ const SearchRide = () => {
     setFrom(to);
     setTo(from);
   };
+
+  const closeFilters = useCallback(() => setFiltersOpen(false), []);
 
   const handleApplyFilters = (next) => {
     setFilters(next);
@@ -1117,7 +1150,11 @@ const SearchRide = () => {
                       ride={ride}
                       onSelect={(r) =>
                         navigate(`/rides/${r.id}`, {
-                          state: { date: r.searched_date },
+                          state: {
+                            date: r.searched_date,
+                            passengers: submitted?.passengers || 1,
+                            seatsLeft: r.seats_remaining_for_date,
+                          },
                         })
                       }
                     />
@@ -1207,7 +1244,7 @@ const SearchRide = () => {
       <FiltersDrawer
         open={filtersOpen}
         value={filters}
-        onClose={() => setFiltersOpen(false)}
+        onClose={closeFilters}
         onApply={handleApplyFilters}
         onClear={handleClearFilters}
       />

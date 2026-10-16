@@ -1,7 +1,7 @@
 // src/pages/MyRides.jsx
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Modal, ModalBody, ModalHeader, ModalFooter } from "reactstrap";
+import { Modal, ModalBody } from "reactstrap";
 import { ridesApi } from "../services/ridesApi";
 import "./MyRides.css";
 import "./AddCar.css"; // 👈 reuse AddCar form styles inside the filter modal
@@ -22,9 +22,16 @@ function formatTime(hhmmss) {
   return `${h12}:${String(m).padStart(2, "0")} ${period}`;
 }
 
+// "YYYY-MM-DD" → local midnight (new Date("YYYY-MM-DD") is UTC midnight)
+function parseLocalDate(iso) {
+  if (!iso) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) return new Date(`${iso}T00:00:00`);
+  return new Date(iso);
+}
+
 function formatDate(iso) {
   if (!iso) return "";
-  const d = new Date(iso);
+  const d = parseLocalDate(iso);
   if (Number.isNaN(d.getTime())) return iso;
   return d.toLocaleDateString("en-US", {
     weekday: "short",
@@ -44,8 +51,8 @@ function rideStatus(ride) {
   if (ride.is_active === false) return { key: "inactive", label: "Inactive" };
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const start = ride.start_date ? new Date(ride.start_date) : null;
-  const end = ride.end_date ? new Date(ride.end_date) : null;
+  const start = parseLocalDate(ride.start_date);
+  const end = parseLocalDate(ride.end_date || ride.start_date);
 
   if (end && end < today) return { key: "past", label: "Past" };
   if (start && start > today) return { key: "upcoming", label: "Upcoming" };
@@ -207,7 +214,7 @@ const Icon = {
  *  Ride card  (unchanged)
  * ------------------------------------------------------------------ */
 
-function RideCard({ ride, onDelete, deleting }) {
+function RideCard({ ride }) {
   const status = rideStatus(ride);
   const stopovers = Array.isArray(ride.stopovers) ? ride.stopovers : [];
   const car = ride.car || {};
@@ -282,15 +289,11 @@ function RideCard({ ride, onDelete, deleting }) {
           </span>
         )}
 
-        <button
-          type="button"
-          className="my_ride_action_btn danger"
-          onClick={() => onDelete(ride)}
-          disabled={deleting}
-        >
-          <Icon.Trash />
-          Delete
-        </button>
+        {/* The API has no DELETE /rides/{id} yet, so no delete action here. */}
+        <Link to={`/rides/${ride.id}`} className="my_ride_action_btn">
+          View
+          <Icon.Arrow />
+        </Link>
       </div>
     </article>
   );
@@ -475,8 +478,6 @@ export default function MyRides() {
   const [activeFilter, setActiveFilter] = useState("all");
   const [filterModalOpen, setFilterModalOpen] = useState(false);
 
-  const [deletingRide, setDeletingRide] = useState(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
   const [toast, setToast] = useState(null);
 
   const showToast = useCallback((message, type = "success") => {
@@ -523,13 +524,7 @@ export default function MyRides() {
     [buildQuery, filters],
   );
 
-  // Initial load
-  useEffect(() => {
-    fetchRides();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Refetch when the status tab changes
+  // Load on mount and whenever the status tab changes
   useEffect(() => {
     fetchRides();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -552,22 +547,6 @@ export default function MyRides() {
     setFilters(EMPTY_FILTER_DRAFT);
     setActiveFilter("all");
     fetchRides(EMPTY_FILTER_DRAFT);
-  };
-
-  const confirmDelete = async () => {
-    if (!deletingRide) return;
-    setDeleteLoading(true);
-    try {
-      await ridesApi.remove(deletingRide.id);
-      setRides((prev) => (prev ? prev.filter((r) => r.id !== deletingRide.id) : prev));
-      showToast("Ride deleted");
-      setDeletingRide(null);
-    } catch (err) {
-      console.error("[delete ride] failed:", err);
-      showToast(err.message || "Failed to delete ride", "error");
-    } finally {
-      setDeleteLoading(false);
-    }
   };
 
   return (
@@ -693,8 +672,6 @@ export default function MyRides() {
               <RideCard
                 key={ride.id}
                 ride={ride}
-                onDelete={setDeletingRide}
-                deleting={deleteLoading && deletingRide?.id === ride.id}
               />
             ))}
           </div>
@@ -709,44 +686,6 @@ export default function MyRides() {
         onApply={handleApplyFilters}
       />
 
-      {/* ---- Delete confirm ---- */}
-      <Modal
-        isOpen={!!deletingRide}
-        centered
-        toggle={() => !deleteLoading && setDeletingRide(null)}
-        className="myr_confirm_modal"
-        backdrop="static"
-      >
-        <ModalBody className="myr_confirm_body">
-          <div className="myr_confirm_icon">
-            <Icon.Trash />
-          </div>
-          <h3 className="myr_confirm_title">Delete this ride?</h3>
-          <p className="myr_confirm_copy">
-            Your ride from <strong>{deletingRide?.origin_city}</strong> to{" "}
-            <strong>{deletingRide?.destination_city}</strong> will be permanently
-            removed. This cannot be undone.
-          </p>
-          <div className="myr_confirm_actions">
-            <button
-              type="button"
-              className="myr_btn"
-              onClick={() => setDeletingRide(null)}
-              disabled={deleteLoading}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              className="myr_btn danger"
-              onClick={confirmDelete}
-              disabled={deleteLoading}
-            >
-              {deleteLoading ? <span className="myr_spinner" /> : "Delete ride"}
-            </button>
-          </div>
-        </ModalBody>
-      </Modal>
     </div>
   );
 }

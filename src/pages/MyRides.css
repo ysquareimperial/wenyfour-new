@@ -65,7 +65,7 @@
 }
 
 .myr_subtitle {
-  font-size: 14.5px;
+  font-size: 15px;
   color: var(--myr-body);
   margin: 0;
   max-width: 460px;
@@ -445,6 +445,7 @@
   cursor: pointer;
   transition: all 150ms ease;
   margin-left: auto;
+  text-decoration: none;
 }
 .my_ride_action_btn:hover:not(:disabled) {
   border-color: var(--myr-accent);
